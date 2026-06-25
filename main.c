@@ -1,0 +1,1133 @@
+/* Sistema Integrado de Locadora de Carros de Luxo - Arquivo único */
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+#include <math.h>
+
+#define MAX_CAR 5
+#define Maximocadastros 5
+
+// Máximo de clientes que podem ser cadastrados.
+// Usado tanto para dimensionar a alocação dinâmica em main() quanto como
+// Limite de iteração em todas as funções que percorrem o vetor de clientes.
+#define MAX_CLIENTES 5
+
+typedef struct {
+    char nome[100], 
+    cnh[20], cpf[15], 
+    telefone[20], 
+    email[100], 
+    cep[10];
+    int idade, ativo;
+} Cliente;
+
+typedef struct {
+    char marca[50];
+    char modelo[50];
+    char cor[20];
+    char placa[8];
+    float km, valor;
+} Carro;
+
+typedef struct {
+    int codigo_aluguel;
+    char cpf_cliente[15];
+    char placa[8];
+    char data_retirada[11];
+    char data_devolucao[11];
+    double valor_total;
+} Aluguel;
+
+void submenuCarros(Carro carros[], int *cadastrados);
+void submenuAlugueis(Aluguel alugueis[], int *qtdAlugueis);
+
+/*
+ * limparTexto
+ * Remove o caractere de nova linha ('\n') deixado no final de uma string
+ * lida com fgets(), substituindo-o por '\0' (fim de string).
+ *
+ * Parâmetros:
+ * - str: string a ser tratada (modificada diretamente, por referência).
+ *
+ * Retorno: void (a função não retorna valor; ela altera 'str' no local).
+ */
+void limparTexto(char *str) {
+    str[strcspn(str, "\n")] = '\0';
+}
+
+/*
+ * limparBuffer
+ * Descarta todos os caracteres restantes no buffer de entrada (stdin) até
+ * encontrar uma nova linha ou o fim do arquivo.
+ *
+ * Por que é necessário: scanf("%d", ...) não consome o '\n' deixado no
+ * buffer após o Enter. Se um fgets() for chamado em seguida sem essa
+ * limpeza, ele lê apenas esse '\n' residual e retorna uma string vazia,
+ * "pulando" a pergunta seguinte. Por isso limparBuffer() é chamada sempre
+ * entre um scanf() e um fgets() subsequente.
+ *
+ * Parâmetros: nenhum.
+ * Retorno: void.
+ */
+void limparBuffer() {
+    int c;
+    while((c = getchar()) != '\n' && c != EOF);
+}
+
+int buscarPorCpf(Cliente *vetor, int qtd, char *cpfBusca) {
+    // Fail-fast: ignoramos clientes com ativo == 0, pois representam
+    // registros "excluídos" (soft delete) e não devem ser encontrados.
+    for(int i = 0; i < MAX_CLIENTES; i++)
+        if(vetor[i].ativo == 1 && strcmp(vetor[i].cpf, cpfBusca) == 0) {
+            return i;
+        }
+    return -1;
+}
+
+int buscarPorEmail(Cliente *vetor, int qtd, char *emailBusca) {
+    for(int i = 0; i < MAX_CLIENTES; i++)
+        if(vetor[i].ativo == 1 && strcmp(vetor[i].email, emailBusca) == 0) {
+            return i;
+        }
+    return -1;
+}
+
+int buscarPorTelefone(Cliente *vetor, int qtd, char *telefoneBusca) {
+    for(int i = 0; i < MAX_CLIENTES; i++)
+        if(vetor[i].ativo == 1 && strcmp(vetor[i].telefone, telefoneBusca) == 0) {
+            return i;
+        }
+    return -1;
+}
+
+int validarDDD(char *telefone) {
+    // Lista fixa com todos os DDDs oficiais brasileiros.
+    const char *dddsValidos[] = {
+        "11", "12", "13", "14", "15", "16", "17", "18", "19",
+        "21", "22", "24", "27", "28",
+        "31", "32", "33", "34", "35", "37", "38",
+        "41", "42", "43", "44", "45", "46", "47", "48", "49",
+        "51", "53", "54", "55",
+        "61", "62", "63", "64", "65", "66", "67", "68", "69",
+        "71", "73", "74", "75", "77", "79",
+        "81", "82", "83", "84", "85", "86", "87", "88", "89",
+        "91", "92", "93", "94", "95", "96", "97", "98", "99"
+    };
+
+    char ddd[3];
+
+    // Extrai apenas os dois primeiros caracteres do telefone (o DDD)
+    // para compará-los isoladamente com a lista de DDDs válidos.
+    strncpy(ddd, telefone, 2);
+    ddd[2] = '\0';
+
+    for(int i = 0; i < 67; i++) {
+        if(strcmp(ddd, dddsValidos[i]) == 0) {
+            return 1; // DDD válido
+        }
+    }
+
+    return 0; // DDD inválido
+}
+
+int validarEmail(char *email) {
+    char *arroba = strchr(email, '@');   // primeira ocorrência de '@'
+    char *ponto = strrchr(email, '.');   // última ocorrência de '.'
+
+    // A comparação de ponteiros (ponto > arroba) funciona porque ambos
+    // apontam para posições dentro da mesma string: se o ponto está em
+    // um endereço de memória "depois" do arroba, ele vem depois no texto.
+    if(arroba != NULL && ponto != NULL && ponto > arroba) {
+        return 1;
+    }
+    return 0;
+}
+
+int validarCnhCarro(char *cnh) {
+    // Aceita qualquer combinação de categorias (ex: "AB", "BE") desde que
+    // contenha pelo menos uma letra que habilite o cliente a dirigir carro.
+    if(strchr(cnh, 'B') != NULL || strchr(cnh, 'b') != NULL ||
+       strchr(cnh, 'C') != NULL || strchr(cnh, 'c') != NULL ||
+       strchr(cnh, 'D') != NULL || strchr(cnh, 'd') != NULL ||
+       strchr(cnh, 'E') != NULL || strchr(cnh, 'e') != NULL) {
+        return 1;
+    }
+    return 0;
+}
+
+int ehCpfValido(char *cpf) {
+    // Fail-fast: testa o tamanho antes de percorrer caractere a caractere,
+    // evitando trabalho desnecessário caso o CPF já esteja claramente errado.
+    if(strlen(cpf) != 11) {
+        return 0;
+    }
+
+    for(int i = 0; i < 11; i++) {
+        if(!isdigit(cpf[i])) {
+            return 0; // Encontrou uma letra ou símbolo, é inválido!
+        }
+    }
+
+    return 1; // Tudo certo, só tem números
+}
+
+int validarIdade(int idade) {
+    if(idade >= 18 && idade <= 120) {
+        return 1; // Idade válida
+    }
+    return 0; // Idade inválida
+}
+
+int validarCEP(char *cep) {
+    if(strlen(cep) != 8) {
+        return 0;
+    }
+
+    for(int i = 0; i < 8; i++) {
+        if(!isdigit(cep[i])) {
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
+int validarTelefoneTamanho(char *telefone) {
+    if(strlen(telefone) != 11) {
+        return 0;
+    }
+
+    for(int i = 0; i < 11; i++) {
+        if(!isdigit(telefone[i])) {
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
+int validarNome(char *nome) {
+    if(strlen(nome) < 5) {
+        return 0;
+    }
+
+    for(int i = 0; nome[i] != '\0'; i++) {
+        if(isdigit(nome[i])) {
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
+void cadastrarCliente(Cliente *vetor, int *qtd) {
+    int pos = -1;
+
+    // Procura a primeira posição livre (ativo == 0) no vetor para reutilizar
+    // o espaço de um cliente excluído anteriormente, em vez de exigir que
+    // o vetor cresça — já que seu tamanho é fixo (MAX_CLIENTES).
+    for(int i = 0; i < MAX_CLIENTES; i++) {
+        if(vetor[i].ativo == 0) {
+            pos = i;
+            break;
+        }
+    }
+
+    if(pos == -1) {
+        printf("\n[ERRO] Limite de clientes atingido!\n");
+        return;
+    }
+
+    char cpfTemp[15];
+    printf("\nCPF (apenas 11 numeros): ");
+    limparBuffer();
+    fgets(cpfTemp, 15, stdin);
+    limparTexto(cpfTemp);
+
+    // Fail-fast: valida o formato do CPF antes de verificar duplicidade,
+    // pois não há motivo para buscar no vetor um CPF que já é inválido.
+    if(!ehCpfValido(cpfTemp)) {
+        printf("\n[ERRO] CPF invalido! Digite apenas 11 numeros.\n");
+        return;
+    }
+
+    if(buscarPorCpf(vetor, *qtd, cpfTemp) != -1) {
+        printf("\n[ERRO] CPF duplicado!\n");
+        return;
+    }
+
+    int idadeTemp;
+    printf("Idade: ");
+    scanf("%d", &idadeTemp);
+
+    if(!validarIdade(idadeTemp)) {
+        printf("\n[ERRO] Idade invalida!\n");
+        return;
+    }
+
+    char cnhTemp[20];
+    printf("CNH: ");
+    // Limpa o '\n' deixado pelo scanf("%d", ...) anterior antes de usar
+    // fgets(), evitando que ele leia uma linha vazia (ver limparBuffer()).
+    limparBuffer();
+    fgets(cnhTemp, 20, stdin);
+    limparTexto(cnhTemp);
+
+    if(!validarCnhCarro(cnhTemp)) {
+        printf("\n[ERRO] CNH nao compativel com carro!\n");
+        return;
+    }
+
+    char telefoneTemp[20];
+    printf("Telefone: ");
+    fgets(telefoneTemp, 20, stdin);
+    limparTexto(telefoneTemp);
+
+    // Todo celular brasileiro tem '9' como terceiro
+    // caractere (posição 2), logo após o DDD de 2 dígitos. Verificamos
+    // o tamanho mínimo antes de acessar o índice 2, para não ler memória
+    // fora dos limites caso o usuário digite um telefone muito curto.
+    if(strlen(telefoneTemp) < 3 || telefoneTemp[2] != '9') {
+        printf("\n[ERRO] Telefone invalido! O numero deve iniciar com 9 apos o DDD.\n");
+        return;
+    }
+
+    if(!validarTelefoneTamanho(telefoneTemp)) {
+        printf("\n[ERRO] Telefone deve possuir 11 numeros.\n");
+        return;
+    }
+
+    if(!validarDDD(telefoneTemp)) {
+        printf("\n[ERRO] DDD invalido!\n");
+        return;
+    }
+
+    if(buscarPorTelefone(vetor, *qtd, telefoneTemp) != -1) {
+        printf("\n[ERRO] Telefone duplicado!\n");
+        return;
+    }
+
+    char emailTemp[100];
+    printf("Email: ");
+    fgets(emailTemp, 100, stdin);
+    limparTexto(emailTemp);
+
+    if(!validarEmail(emailTemp)) {
+        printf("\n[ERRO] Email invalido!\n");
+        return;
+    }
+
+    if(buscarPorEmail(vetor, *qtd, emailTemp) != -1) {
+        printf("\n[ERRO] E-mail duplicado!\n");
+        return;
+    }
+
+    char nomeTemp[100];
+    printf("Nome: ");
+    fgets(nomeTemp, 100, stdin);
+    limparTexto(nomeTemp);
+
+    if(!validarNome(nomeTemp)) {
+        printf("\n[ERRO] Nome invalido!\n");
+        return;
+    }
+
+    char cepTemp[10];
+    printf("CEP: ");
+    fgets(cepTemp, 10, stdin);
+    limparTexto(cepTemp);
+
+    if(!validarCEP(cepTemp)) {
+        printf("\n[ERRO] CEP invalido!\n");
+        return;
+    }
+
+    strcpy(vetor[pos].cpf, cpfTemp);
+    vetor[pos].idade = idadeTemp;
+    strcpy(vetor[pos].cnh, cnhTemp);
+    strcpy(vetor[pos].telefone, telefoneTemp);
+    strcpy(vetor[pos].email, emailTemp);
+    strcpy(vetor[pos].nome, nomeTemp);
+    strcpy(vetor[pos].cep, cepTemp);
+    vetor[pos].ativo = 1;
+    (*qtd)++;
+
+    printf("\n[OK] Cliente cadastrado com sucesso!\n");
+}
+
+void listarClientes(Cliente *vetor, int qtd) {
+    int total = 0;
+
+    for(int i = 0; i < MAX_CLIENTES; i++) {
+        if(vetor[i].ativo == 1) {
+            printf("\nNome: %s\nCPF: %s\nIdade: %d\nCNH: %s\nTelefone: %s\nEmail: %s\nCEP: %s\n",
+                   vetor[i].nome, vetor[i].cpf, vetor[i].idade, vetor[i].cnh, vetor[i].telefone, vetor[i].email, vetor[i].cep);
+            total++;
+        }
+    }
+    if(total == 0) {
+        printf("\nNenhum cliente cadastrado.\n");
+    }
+}
+
+void consultarCliente(Cliente *vetor, int qtd) {
+    char cpfBusca[15];
+    printf("\nCPF para buscar: ");
+    limparBuffer();
+    fgets(cpfBusca, 15, stdin);
+    limparTexto(cpfBusca);
+
+    int pos = buscarPorCpf(vetor, qtd, cpfBusca);
+    if(pos == -1) {
+        printf("\n[ERRO] Nao encontrado!\n");
+    } else {
+        printf("\n[OK] Encontrado!\nNome: %s\nCPF: %s\nEmail: %s\n", vetor[pos].nome, vetor[pos].cpf, vetor[pos].email);
+    }
+}
+
+void alterarCliente(Cliente *vetor, int qtd) {
+    char cpfBusca[15], novoCpf[15], novoTelefone[20], novoEmail[100], novaCnh[20], novoNome[100], novoCep[10];
+    int novaIdade;
+
+    printf("\nCPF para alterar: ");
+    limparBuffer();
+    fgets(cpfBusca, 15, stdin);
+    limparTexto(cpfBusca);
+
+    int pos = buscarPorCpf(vetor, qtd, cpfBusca);
+    if(pos == -1) {
+        printf("\n[ERRO] Nao encontrado!\n");
+        return;
+    }
+
+    int opcaoAlterar = 0;
+    printf("\nO que deseja alterar?\n1. CPF\n2. Nome\n3. Idade\n4. CNH\n5. Telefone\n6. Email\n7. CEP\nEscolha: ");
+    scanf("%d", &opcaoAlterar);
+
+    if(opcaoAlterar == 1) {
+        printf("Novo CPF: ");
+        limparBuffer();
+        fgets(novoCpf, 15, stdin);
+        limparTexto(novoCpf);
+
+        if(!ehCpfValido(novoCpf)) {
+            printf("\n[ERRO] CPF invalido!\n");
+            return;
+        }
+
+        // Verifica duplicidade somente depois de confirmar que o formato
+        // do novo CPF é válido (fail-fast), evitando busca desnecessária.
+        if(buscarPorCpf(vetor, qtd, novoCpf) != -1) {
+            printf("\n[ERRO] CPF ja cadastrado!\n");
+            return;
+        }
+
+        strcpy(vetor[pos].cpf, novoCpf);
+        printf("\n[OK] CPF atualizado!\n");
+
+    } else if(opcaoAlterar == 2) {
+        printf("Novo Nome: ");
+        limparBuffer();
+        fgets(novoNome, 100, stdin);
+        limparTexto(novoNome);
+
+        if(!validarNome(novoNome)) {
+            printf("\n[ERRO] Nome invalido! Deve conter pelo menos 5 caracteres.\n");
+            return;
+        }
+
+        strcpy(vetor[pos].nome, novoNome);
+        printf("\n[OK] Nome atualizado!\n");
+
+    } else if(opcaoAlterar == 3) {
+        printf("Nova Idade: ");
+        limparBuffer();
+        scanf("%d", &novaIdade);
+        limparBuffer();
+
+        // Reaproveita a mesma regra usada no cadastro (validarIdade),
+        // em vez de repetir a comparação "novaIdade < 18" isoladamente,
+        // para manter uma única fonte de verdade sobre o que é válido.
+        if(!validarIdade(novaIdade)) {
+            printf("\n[ERRO] Idade invalida!\n");
+            return;
+        }
+
+        vetor[pos].idade = novaIdade;
+        printf("\n[OK] Idade atualizada!\n");
+
+    } else if(opcaoAlterar == 4) {
+        printf("Nova CNH: ");
+        limparBuffer();
+        fgets(novaCnh, 20, stdin);
+        limparTexto(novaCnh);
+
+        if(!validarCnhCarro(novaCnh)) {
+            printf("\n[ERRO] CNH nao compativel com carro!\n");
+            return;
+        }
+
+        strcpy(vetor[pos].cnh, novaCnh);
+        printf("\n[OK] CNH atualizada!\n");
+
+    } else if(opcaoAlterar == 5) {
+        printf("Novo Telefone: ");
+        limparBuffer();
+        fgets(novoTelefone, 20, stdin);
+        limparTexto(novoTelefone);
+
+        if(!validarTelefoneTamanho(novoTelefone)) {
+            printf("\n[ERRO] Telefone deve possuir 11 numeros.\n");
+            return;
+        }
+
+        if(!validarDDD(novoTelefone)) {
+            printf("\n[ERRO] DDD invalido!\n");
+            return;
+        }
+
+        if(novoTelefone[2] != '9') {
+            printf("\n[ERRO] O telefone deve iniciar com 9 apos o DDD.\n");
+            return;
+        }
+
+        if(buscarPorTelefone(vetor, qtd, novoTelefone) != -1) {
+            printf("\n[ERRO] Telefone ja em uso!\n");
+            return;
+        }
+
+        strcpy(vetor[pos].telefone, novoTelefone);
+        printf("\n[OK] Telefone atualizado!\n");
+
+    } else if(opcaoAlterar == 6) {
+        printf("Novo Email: ");
+        limparBuffer();
+        fgets(novoEmail, 100, stdin);
+        limparTexto(novoEmail);
+
+        // Mesma validação de formato aplicada no cadastro original,
+        // garantindo que a alteração não relaxe uma regra já existente.
+        if(!validarEmail(novoEmail)) {
+            printf("\n[ERRO] Email invalido!\n");
+            return;
+        }
+
+        if(buscarPorEmail(vetor, qtd, novoEmail) != -1) {
+            printf("\n[ERRO] E-mail ja em uso!\n");
+            return;
+        }
+
+        strcpy(vetor[pos].email, novoEmail);
+        printf("\n[OK] Email atualizado!\n");
+
+    } else if(opcaoAlterar == 7) {
+        printf("Novo CEP: ");
+        limparBuffer();
+        fgets(novoCep, 10, stdin);
+        limparTexto(novoCep);
+
+        if(!validarCEP(novoCep)) {
+            printf("\n[ERRO] CEP invalido! Deve possuir 8 numeros.\n");
+            return;
+        }
+
+        strcpy(vetor[pos].cep, novoCep);
+        printf("\n[OK] CEP atualizado!\n");
+
+    } else {
+        printf("\n[ERRO] Opcao invalida!\n");
+    }
+}
+
+void excluirCliente(Cliente *vetor, int *qtd) {
+    char cpfBusca[15];
+    printf("\nCPF para excluir: ");
+    limparBuffer();
+    fgets(cpfBusca, 15, stdin);
+    limparTexto(cpfBusca);
+
+    int pos = buscarPorCpf(vetor, *qtd, cpfBusca);
+    if(pos == -1) {
+        printf("\n[ERRO] Nao encontrado!\n");
+        return;
+    }
+
+    // Soft delete: apenas desativamos o registro em vez de deslocar todos
+    // os elementos seguintes do vetor para "tapar o buraco". Isso é O(1)
+    // em vez de O(n), e a posição liberada será reaproveitada no próximo
+    // cadastro (ver busca por 'ativo == 0' em cadastrarCliente).
+    vetor[pos].ativo = 0;
+    (*qtd)--;
+
+    printf("\n[OK] Removido com sucesso!\n");
+}
+
+void submenuClientes(Cliente *vetor, int *qtd) {
+    int opcao = 0;
+    while(opcao != 6) {
+        printf("\n--- PAINEL DE CLIENTES ---\n");
+        printf("1. Cadastrar cliente\n");
+        printf("2. Listar clientes\n");
+        printf("3. Consultar cliente\n");
+        printf("4. Alterar cliente\n");
+        printf("5. Excluir cliente\n");
+        printf("6. Voltar ao menu principal\n");
+        printf("Escolha uma opcao: ");
+        scanf("%d", &opcao);
+
+        if(opcao == 1) {
+            cadastrarCliente(vetor, qtd);
+        } else if(opcao == 2) {
+            listarClientes(vetor, *qtd);
+        } else if(opcao == 3) {
+            consultarCliente(vetor, *qtd);
+        } else if(opcao == 4) {
+            alterarCliente(vetor, *qtd);
+        } else if(opcao == 5) {
+            excluirCliente(vetor, qtd);
+        } else if(opcao == 6) {
+            printf("Voltando...\n");
+            return;
+        } else {
+            printf("\n[ERRO] Opcao invalida!\n");
+        }
+    }
+}
+
+int validarPlaca(char *placa) {
+    //recebe uma placa e verifica se esta no fomato Mercosul e padroniza os caracteres em Maiusculos, valida = 1, invalida = 0.
+    char *p = placa;
+    if(strlen(placa)!=7){
+        return 0;
+    }
+    if(isalpha(*p)==0 || isalpha(*(p+1))==0 || isalpha(*(p+2))==0 ||isdigit(*(p+3))==0 ||
+       isalpha(*(p+4))==0 || isdigit(*(p+5))==0 || isdigit(*(p+6))==0){
+        return 0;
+    }
+    else{
+        for(p; p < placa+7; p++){
+            if(isalpha(*p)){
+                *p = toupper(*p);
+            }
+        }
+        return 1;
+    }
+}
+
+int placaExiste(Carro *carros, int cadastrados, char *placa) {
+    //recebe a lista de carros, a quantidade de carros cadastrados e uma placa, placa já cadastrada = 1, não cadastrada = 0.
+    for(Carro *p=carros; p<carros+cadastrados; p++){
+        if(strcmp(placa, p->placa)==0){
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int cadastrarCarro(Carro *car, Carro *carros, int cadastrados) {
+    //recebe uma posição de um vetor de carros, a lista de carros e a quantidade de carros.
+    //placa invalida = 0, valida = 1;
+    printf("\nDigite a placa no formato (ABC1D23): "); scanf("%7s", car->placa);
+    
+    if(validarPlaca(car->placa)){
+        if(placaExiste(carros, cadastrados, car->placa)){
+            printf("\n[ERRO] Placa ja cadastrada.\n\n");
+            return 0;
+        }
+        else{
+            printf("[OK] Placa aceita: %s\n", car->placa);
+            printf("\nDigite a marca do carro: "); scanf(" %[^\n]", car->marca);
+            printf("Digite o Modelo: "); scanf(" %[^\n]", car->modelo);
+            printf("Digite a cor: "); scanf(" %[^\n]", car->cor);
+            printf("Digite a Quilometragem: "); scanf("%f", &car->km);
+            printf("Digite o Valor do aluguel: "); scanf("%f", &car->valor);
+            printf("\n[OK] Carro cadastrado com sucesso!\n\n");
+            return 1;
+        }
+    }
+    else{
+        printf("\n[ERRO] Placa Invalida!!\n\n");
+        return cadastrarCarro(car, carros, cadastrados);
+    }
+}
+
+void consultarCarro(Carro *carros, int cadastrados, char *placa) {
+    //recebe uma lista de carros, a quantidade de cadastros e uma placa.
+    if(!validarPlaca(placa)){
+        printf("\n[ERRO] Placa Invalida!\n\n");
+        return;
+    }
+    if(!placaExiste(carros, cadastrados, placa)){
+        printf("\n[ERRO] Placa nao Cadastrada!\n\n");
+        return;
+    }
+    for(Carro *p=carros; p<carros+cadastrados; p++){
+        if(strcmp(placa, p->placa)==0){
+            printf("Placa: %s\n", p->placa);
+            printf("Modelo: %s %s, %s\n", p->marca, p->modelo, p->cor);
+            printf("Quilometragem: %.2f\n", p->km);
+            printf("Valor Aluguel: %.2f\n\n", p->valor);
+            break;
+        }
+    }
+}
+
+void listarCarros(Carro *carros, int cadastrados) {
+    //recebe um vetor de carros e a quantidade de carros cadastrados.
+    int i=1;
+    if(cadastrados==0){
+        printf("\n[ERRO] Nenhum carro cadastrado!\n\n");
+        return;
+    }
+    for(Carro *p = carros; p < carros+cadastrados; p++){
+        printf("\nCarro %d:\n", i); i++;
+        printf("Placa: %s\n", p->placa);
+        printf("Modelo: %s %s, %s\n", p->marca, p->modelo, p->cor);
+        printf("Quilometragem: %.2f\n", p->km);
+        printf("Valor Aluguel: %.2f\n\n", p->valor);
+    }
+}
+
+void alterarCarro(Carro *carros, int cadastrados, char *placa) {
+    //recebe uma lista de carros, a quantidade de cadastros e uma placa.
+    if(!validarPlaca(placa)){
+        printf("\n[ERRO] Placa Invalida!\n\n");
+        return;
+    }
+    if(!placaExiste(carros, cadastrados, placa)){
+        printf("\n[ERRO] Placa nao Cadastrada!\n\n");
+        return;
+    }
+    for(Carro *p=carros; p<carros+cadastrados; p++){
+        if(strcmp(placa, p->placa)==0){
+            printf("%s\n", p->placa);
+            printf("Nova marca do carro: "); scanf(" %[^\n]", p->marca);
+            printf("Novo Modelo: "); scanf(" %[^\n]", p->modelo);
+            printf("Nova cor: "); scanf(" %[^\n]", p->cor);
+            printf("Nova Quilometragem: "); scanf("%f", &p->km);
+            printf("Novo Valor do Aluguel: "); scanf("%f", &p->valor);
+            break;
+        }
+    }
+}
+
+void excluirCarroPlaca(Carro *carros, int *cadastrados, char *placa) {
+    //recebe uma lista de carros, a quantidade de cadastros e uma placa.
+    Carro *encontrado = NULL;
+    if(!validarPlaca(placa)){
+        printf("\n[ERRO] Placa Invalida!\n");
+        return;
+    }
+    for(Carro *p=carros; p<carros+*cadastrados; p++){
+        if(strcmp(p->placa, placa) == 0){
+            encontrado = p;
+            break;
+        }
+    }
+    if(encontrado == NULL){
+        printf("\n[ERRO] Placa nao cadastrada!\n\n");
+        return;
+    }
+    for(Carro *p=encontrado; p<carros+(*cadastrados-1); p++){
+        *p = *(p + 1);
+    }
+    (*cadastrados)--;
+    printf("\n[OK] Carro excluido com sucesso!\n\n");
+}
+
+int menu() {
+    int op;
+
+    printf("\n--- PAINEL DE CARROS ---\n");
+    printf("1 - Cadastrar carro\n");
+    printf("2 - listar carros\n");
+    printf("3 - Excluir carro\n");
+    printf("4 - Consultar carro pela placa\n");
+    printf("5 - Alterar Carro pela placa\n");
+    printf("0 - Sair\n");
+    printf("Opcao: "); scanf("%d", &op);
+
+    return op;
+}
+
+//*Verifica se o funcionario não esta usando um código repetido para cadastrar o aluguel.
+int codigoExiste(Aluguel alugueis[], int qtdAlugueis, int codigo) {
+    for(int i = 0; i < qtdAlugueis; i++) {
+        if(alugueis[i].codigo_aluguel == codigo) {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+void cadastrarAluguel(Aluguel alugueis[], int *qtdAlugueis) {
+    int pos = *qtdAlugueis;
+
+    if(*qtdAlugueis >= Maximocadastros) {
+        printf("Limite de alugueis atingido!");
+        return;
+    }
+
+    printf("\n--- CADASTRAR ALUGUEL ---\n");
+
+    int codigo;
+
+    do {
+        printf("Codigo do aluguel: ");
+        scanf("%d", &codigo);
+
+        if(codigoExiste(alugueis, *qtdAlugueis, codigo)) {
+            printf("Esse codigo ja esta cadastrado!\n");
+        }
+
+    } while(codigoExiste(alugueis, *qtdAlugueis, codigo));
+
+    alugueis[pos].codigo_aluguel = codigo;
+    getchar();
+
+    int validarPlaca = 0;
+
+    while(!validarPlaca) {
+        printf("Placa do carro: ");
+        fgets(alugueis[pos].placa, 8, stdin);
+
+        alugueis[pos].placa[strcspn(alugueis[pos].placa, "\n")] = '\0';
+
+        if(strlen(alugueis[pos].placa) != 7) {
+            printf("Placa invalida!\n");
+            continue;
+        }
+
+        int ok_placa = 1;
+
+        for(int i = 0; i < 7; i++) {
+            if(i < 3) {
+                if(!isalpha(alugueis[pos].placa[i])) {
+                    ok_placa = 0;
+                }
+            } else if(i == 3) {
+                if(!isdigit(alugueis[pos].placa[i])) {
+                    ok_placa = 0;
+                }
+            } else if(i == 4) {
+                if(!isalpha(alugueis[pos].placa[i])) {
+                    ok_placa = 0;
+                }
+            } else {
+                if(!isdigit(alugueis[pos].placa[i])) {
+                    ok_placa = 0;
+                }
+            }
+        }
+
+        if(!ok_placa) {
+            printf("Placa invalida!\n");
+        } else {
+            validarPlaca = 1;
+        }
+    }
+
+    int valido = 0;
+
+    getchar();
+
+    getchar();
+
+    printf("CPF do cliente: ");
+    fgets(alugueis[pos].cpf_cliente, 15, stdin);
+    alugueis[pos].cpf_cliente[strcspn(alugueis[pos].cpf_cliente, "\n")] = '\0';
+
+    printf("Data de retirada (dd/mm/aa): ");
+    scanf(" %10s", alugueis[pos].data_retirada);
+
+    printf("Data de devolucao (dd/mm/aa): ");
+    scanf(" %10s", alugueis[pos].data_devolucao);
+
+    printf("Valor total: ");
+    scanf("%lf", &alugueis[pos].valor_total);
+
+    (*qtdAlugueis)++;
+
+    printf("Aluguel cadastrado com sucesso!\n");
+}
+
+//*a função lista todos alugueis que ja foram adicionados, mostrando todos os dados. 
+void listarAlugueis(Aluguel alugueis[], int qtdAlugueis) {
+    if(qtdAlugueis == 0){
+        printf("Nenhum aluguel cadastrado.");
+        return;
+    }
+    printf("\n--- LISTA DE ALUGUEIS ---\n");
+
+    for(int i = 0; i < qtdAlugueis; i++){
+        printf("\nAluguel %d\n", i + 1);
+        printf("Codigo do aluguel: %d\n", alugueis[i].codigo_aluguel);
+        printf("Placa do carro: %s", alugueis[i].placa);
+        printf("CPF do cliente: %s\n", alugueis[i].cpf_cliente);
+        printf("Data de retirada: %s\n", alugueis[i].data_retirada);
+        printf("Data de devolucao: %s\n", alugueis[i].data_devolucao);
+        printf("Valor total: %.2lf\n", alugueis[i].valor_total);
+    }
+}
+
+/*Além de possuir a listagem de todos alugueis, nessa função podemos procurar um aluguel especifico através do código
+o que acaba facilitando na hora para o funcionário.*/
+void buscarAluguel(Aluguel alugueis[], int qtdAlugueis) {
+    int codigo;
+    int encontrado = 0;
+
+    printf("\n--- BUSCAR ALUGUEL ---\n");
+
+    printf("Digite o codigo do aluguel: ");
+    scanf("%d", &codigo);
+
+    for (int i = 0; i < qtdAlugueis; i++) {
+
+        if (alugueis[i].codigo_aluguel == codigo) {
+            printf("\nAluguel encontrado:\n");
+            printf("Codigo do aluguel: %d\n", alugueis[i].codigo_aluguel);
+            printf("Placa do carro: %s\n", alugueis[i].placa);
+            printf("CPF do cliente: %s\n", alugueis[i].cpf_cliente);
+            printf("Data de retirada: %s\n", alugueis[i].data_retirada);
+            printf("Data de devolucao: %s\n", alugueis[i].data_devolucao);
+            printf("Valor total: %.2lf\n", alugueis[i].valor_total);
+            encontrado = 1;
+            break;
+        }
+    }
+    if (!encontrado) {
+        printf("Aluguel nao encontrado.\n");
+    }
+}
+
+/*esta é a função para alterar o aluguel caso necessário, como por exemplo 
+algum erro de digitação cometido em algum dos campos.*/
+void alterarAluguel(Aluguel alugueis[], int qtdAlugueis) {
+    int id;
+    int encontrado = 0;
+
+    printf("Digite o codigo do aluguel que deseja modificar: ");
+    scanf("%d", &id);
+
+    for(int i = 0; i < qtdAlugueis; i++){
+        if(alugueis[i].codigo_aluguel == id){
+            printf("Novo CPF do cliente: ");
+            scanf("%11s", alugueis[i].cpf_cliente);
+
+            printf("Novo codigo do aluguel: ");
+            scanf("%d", &alugueis[i].codigo_aluguel);
+
+            printf("Nova data de retirada: ");
+            scanf("%s", alugueis[i].data_retirada);
+
+            printf("Nova data de devolucao: ");
+            scanf("%s", alugueis[i].data_devolucao);
+
+            printf("Novo valor total: ");
+            scanf("%lf", &alugueis[i].valor_total);
+
+            encontrado = 1;
+
+            break; //* para o loop porque encontrou o registro
+        }
+    }
+    if(!encontrado){
+        printf("Aluguel nao encontrado.\n");
+    }
+}
+
+void excluirAluguel(Aluguel alugueis[], int *qtdAlugueis) {
+    int id;
+    int encontrado = 0;
+
+    printf("Digite o codigo do aluguel que deseja excluir: ");
+    scanf("%d", &id);
+    for (int i = 0; i < *qtdAlugueis; i++) {
+
+        if (alugueis[i].codigo_aluguel == id) {
+
+            for (int j = i; j < *qtdAlugueis - 1; j++) {
+                alugueis[j] = alugueis[j + 1];
+            }
+            (*qtdAlugueis)--;
+            encontrado = 1;
+
+            printf("Aluguel excluido com sucesso!\n");
+            break;
+        }
+    }
+    if (!encontrado) {
+        printf("Aluguel nao encontrado.\n");
+    }
+}
+
+void menuAluguel(Aluguel alugueis[], int *qtdAlugueis) {
+    int opcao;
+
+    do {
+        printf("\n--- MENU ALUGUEL ---\n");
+        printf("1 - Cadastrar aluguel\n");
+        printf("2 - Listar alugueis\n");
+        printf("3 - Alterar aluguel\n");
+        printf("4 - Excluir aluguel\n");
+        printf("5 - Buscar aluguel\n");
+        printf("0 - Voltar ao menu principal\n");
+        printf("Opcao: ");
+        scanf("%d", &opcao);
+
+        switch(opcao) {
+            case 1:
+                cadastrarAluguel(alugueis, qtdAlugueis);
+                break;
+            case 2:
+                listarAlugueis(alugueis, *qtdAlugueis);
+                break;
+            case 3:
+                alterarAluguel(alugueis, *qtdAlugueis);
+                break;
+            case 4:
+                excluirAluguel(alugueis, qtdAlugueis);
+                break;
+            case 5:
+                buscarAluguel(alugueis, *qtdAlugueis);
+                break;
+            case 0:
+                break;
+            default: 
+                printf("[ERRO] Opcao invalida!\n");
+        }
+
+    } while(opcao != 0);
+}
+
+void submenuCarros(Carro carros[], int *cadastrados) {
+    int opcao;
+
+    do {
+        printf("\n--- CONTROLE DE FROTA ---\n");
+        printf("1. Cadastrar veiculo\n");
+        printf("2. Listar frota\n");
+        printf("3. Consultar veiculo\n");
+        printf("4. Alterar veiculo\n");
+        printf("5. Remover veiculo\n");
+        printf("6. Voltar ao menu principal\n");
+        printf("Opcao: ");
+        scanf("%d", &opcao);
+
+        switch(opcao) {
+            case 1:
+                if(*cadastrados >= MAX_CAR) {
+                    printf("Limite atingido\n");
+                    break;
+                }
+
+                if(cadastrarCarro(carros + *cadastrados, carros, *cadastrados)) {
+                    (*cadastrados)++;
+                }
+                break;
+
+            case 2:
+                listarCarros(carros, *cadastrados);
+                break;
+
+            case 3: {
+                char placa[8];
+                printf("Digite a placa: ");
+                scanf("%7s", placa);
+                consultarCarro(carros, *cadastrados, placa);
+                break;
+            }
+
+            case 4: {
+                char placa[8];
+                printf("Digite a placa: ");
+                scanf("%7s", placa);
+                alterarCarro(carros, *cadastrados, placa);
+                break;
+            }
+
+            case 5: {
+                char placa[8];
+                printf("Digite a placa: ");
+                scanf("%7s", placa);
+                excluirCarroPlaca(carros, cadastrados, placa);
+                break;
+            }
+
+            case 6:
+                printf("Voltando...\n");
+                break;
+
+            default:
+                printf("Opcao invalida!\n");
+        }
+
+    } while(opcao != 6);
+}
+
+void submenuAlugueis(Aluguel alugueis[], int *qtdAlugueis) {
+    menuAluguel(alugueis, qtdAlugueis);
+}
+
+void menuPrincipal( Cliente *vetorClientes,
+    Carro carros[],
+    int *cadastrados,
+    Aluguel alugueis[],
+    int *qtdAlugueis
+) {
+    // Inicialização defensiva: malloc() não zera a memória alocada, então
+    // os campos 'ativo' começariam com valor indeterminado (lixo de
+    // memória) se não fossem explicitamente zerados aqui.
+    for(int i = 0; i < MAX_CLIENTES; i++) {
+        vetorClientes[i].ativo = 0;
+    }
+
+    int qtdClientes = 0;
+    int opcao = 0;
+
+    while(opcao != 4) {
+        printf("\n=== MENU PRINCIPAL ===\n");
+        printf("1. Gerenciar clientes\n");
+        printf("2. Gerenciar carros\n");
+        printf("3. Gerenciar alugueis\n");
+        printf("4. Sair do Sistema\n");
+        printf("Escolha uma opcao: ");
+        scanf("%d", &opcao);
+
+        if(opcao == 1) {
+            // Passamos &qtdClientes (endereço da variável) porque
+            // submenuClientes() e, por consequência, cadastrarCliente()/
+            // excluirCliente() precisam alterar o valor real de
+            // qtdClientes, e não apenas uma cópia local.
+            submenuClientes(vetorClientes, &qtdClientes);
+        } else if(opcao == 2) {
+            submenuCarros(carros, cadastrados);;
+        } else if(opcao == 3) {
+            submenuAlugueis(alugueis, qtdAlugueis);;
+        } else if(opcao == 4) {
+            printf("Encerrando o sistema de locacao...\n");
+            return;
+        } else {
+            printf("\n[ERRO] Opcao invalida! Tente novamente.\n");
+        }
+    }
+}
+
+int main() {
+    Cliente *vetorClientes = malloc(sizeof(Cliente) * MAX_CLIENTES);
+    if(vetorClientes == NULL) return 1;
+
+    Carro carros[MAX_CAR];
+    int cadastrados = 0;
+
+    Aluguel alugueis[Maximocadastros];
+    int qtdAlugueis = 0;
+
+    menuPrincipal(vetorClientes, carros, &cadastrados, alugueis, &qtdAlugueis);
+
+    free(vetorClientes);
+
+    return 0;
+}
