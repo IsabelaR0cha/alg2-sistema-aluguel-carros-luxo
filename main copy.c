@@ -1,4 +1,4 @@
-/* Sistema integrado de locadora - arquivo unico */
+/* Sistema Integrado de Locadora de Carros de Luxo - Arquivo único */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,24 +10,25 @@
 
 // Máximo de clientes que podem ser cadastrados.
 // Usado tanto para dimensionar a alocação dinâmica em main() quanto como
-// limite de iteração em todas as funções que percorrem o vetor de clientes.
+// Limite de iteração em todas as funções que percorrem o vetor de clientes.
 #define MAX_CLIENTES 5
 
-void submenuCarros();
-void submenuAlugueis();
-
 typedef struct {
-    char nome[100], cnh[20], cpf[15], telefone[20], email[100], cep[10];
+    char nome[100], 
+    cnh[20], cpf[15], 
+    telefone[20], 
+    email[100], 
+    cep[10];
     int idade, ativo;
 } Cliente;
 
-struct carro {
+typedef struct {
     char marca[50];
     char modelo[50];
     char cor[20];
     char placa[8];
     float km, valor;
-} ;
+} Carro;
 
 typedef struct {
     int codigo_aluguel;
@@ -38,11 +39,8 @@ typedef struct {
     double valor_total;
 } Aluguel;
 
-Aluguel alugueis[Maximocadastros];
-int qtdAlugueis = 0;
-
-struct carro carros[MAX_CAR];
-int cadastrados = 0;
+void submenuCarros(Carro carros[], int *cadastrados);
+void submenuAlugueis(Aluguel alugueis[], int *qtdAlugueis);
 
 /*
  * limparTexto
@@ -369,7 +367,7 @@ void listarClientes(Cliente *vetor, int qtd) {
         }
     }
     if(total == 0) {
-        printf("Nenhum cliente cadastrado.\n");
+        printf("\nNenhum cliente cadastrado.\n");
     }
 }
 
@@ -617,9 +615,9 @@ int validarPlaca(char *placa) {
     }
 }
 
-int placaExiste(struct carro *carros, int cadastrados, char *placa) {
+int placaExiste(Carro *carros, int cadastrados, char *placa) {
     //recebe a lista de carros, a quantidade de carros cadastrados e uma placa, placa já cadastrada = 1, não cadastrada = 0.
-    for(struct carro *p=carros; p<carros+cadastrados; p++){
+    for(Carro *p=carros; p<carros+cadastrados; p++){
         if(strcmp(placa, p->placa)==0){
             return 1;
         }
@@ -627,44 +625,44 @@ int placaExiste(struct carro *carros, int cadastrados, char *placa) {
     return 0;
 }
 
-int cadastrarCarro(struct carro *car, struct carro *carros, int cadastrados) {
+int cadastrarCarro(Carro *car, Carro *carros, int cadastrados) {
     //recebe uma posição de um vetor de carros, a lista de carros e a quantidade de carros.
     //placa invalida = 0, valida = 1;
-    printf("Digite a placa no formato (ABC1D23): "); scanf("%7s", car->placa);
+    printf("\nDigite a placa no formato (ABC1D23): "); scanf("%7s", car->placa);
     
     if(validarPlaca(car->placa)){
         if(placaExiste(carros, cadastrados, car->placa)){
-            printf("Placa ja cadastrada.\n\n");
+            printf("\n[ERRO] Placa ja cadastrada.\n\n");
             return 0;
         }
         else{
-            printf("Placa aceita: %s\n", car->placa);
-            printf("Digite a marca do carro: "); scanf(" %[^\n]", car->marca);
+            printf("[OK] Placa aceita: %s\n", car->placa);
+            printf("\nDigite a marca do carro: "); scanf(" %[^\n]", car->marca);
             printf("Digite o Modelo: "); scanf(" %[^\n]", car->modelo);
             printf("Digite a cor: "); scanf(" %[^\n]", car->cor);
             printf("Digite a Quilometragem: "); scanf("%f", &car->km);
             printf("Digite o Valor do aluguel: "); scanf("%f", &car->valor);
-            printf("Carro cadastrado com sucesso!\n\n");
+            printf("\n[OK] Carro cadastrado com sucesso!\n\n");
             return 1;
         }
     }
     else{
-        printf("Placa Invalida!!\n\n");
+        printf("\n[ERRO] Placa Invalida!!\n\n");
         return cadastrarCarro(car, carros, cadastrados);
     }
 }
 
-void consultarCarro(struct carro *carros, int cadastrados, char *placa) {
+void consultarCarro(Carro *carros, int cadastrados, char *placa) {
     //recebe uma lista de carros, a quantidade de cadastros e uma placa.
     if(!validarPlaca(placa)){
-        printf("Placa Invalida!\n\n");
+        printf("\n[ERRO] Placa Invalida!\n\n");
         return;
     }
     if(!placaExiste(carros, cadastrados, placa)){
-        printf("Placa nao Cadastrada!\n\n");
+        printf("\n[ERRO] Placa nao Cadastrada!\n\n");
         return;
     }
-    for(struct carro *p=carros; p<carros+cadastrados; p++){
+    for(Carro *p=carros; p<carros+cadastrados; p++){
         if(strcmp(placa, p->placa)==0){
             printf("Placa: %s\n", p->placa);
             printf("Modelo: %s %s, %s\n", p->marca, p->modelo, p->cor);
@@ -675,15 +673,15 @@ void consultarCarro(struct carro *carros, int cadastrados, char *placa) {
     }
 }
 
-void listarCarros(struct carro *carros, int cadastrados) {
+void listarCarros(Carro *carros, int cadastrados) {
     //recebe um vetor de carros e a quantidade de carros cadastrados.
     int i=1;
     if(cadastrados==0){
-        printf("Nenhum carro cadastrado!\n\n");
+        printf("\n[ERRO] Nenhum carro cadastrado!\n\n");
         return;
     }
-    for(struct carro *p = carros; p < carros+cadastrados; p++){
-        printf("Carro %d:\n", i); i++;
+    for(Carro *p = carros; p < carros+cadastrados; p++){
+        printf("\nCarro %d:\n", i); i++;
         printf("Placa: %s\n", p->placa);
         printf("Modelo: %s %s, %s\n", p->marca, p->modelo, p->cor);
         printf("Quilometragem: %.2f\n", p->km);
@@ -691,17 +689,17 @@ void listarCarros(struct carro *carros, int cadastrados) {
     }
 }
 
-void alterarCarro(struct carro *carros, int cadastrados, char *placa) {
+void alterarCarro(Carro *carros, int cadastrados, char *placa) {
     //recebe uma lista de carros, a quantidade de cadastros e uma placa.
     if(!validarPlaca(placa)){
-        printf("Placa Invalida!\n\n");
+        printf("\n[ERRO] Placa Invalida!\n\n");
         return;
     }
     if(!placaExiste(carros, cadastrados, placa)){
-        printf("Placa nao Cadastrada!\n\n");
+        printf("\n[ERRO] Placa nao Cadastrada!\n\n");
         return;
     }
-    for(struct carro *p=carros; p<carros+cadastrados; p++){
+    for(Carro *p=carros; p<carros+cadastrados; p++){
         if(strcmp(placa, p->placa)==0){
             printf("%s\n", p->placa);
             printf("Nova marca do carro: "); scanf(" %[^\n]", p->marca);
@@ -714,34 +712,34 @@ void alterarCarro(struct carro *carros, int cadastrados, char *placa) {
     }
 }
 
-void excluirCarroPlaca(struct carro *carros, int *cadastrados, char *placa) {
+void excluirCarroPlaca(Carro *carros, int *cadastrados, char *placa) {
     //recebe uma lista de carros, a quantidade de cadastros e uma placa.
-    struct carro *encontrado = NULL;
+    Carro *encontrado = NULL;
     if(!validarPlaca(placa)){
-        printf("Placa Invalida!\n");
+        printf("\n[ERRO] Placa Invalida!\n");
         return;
     }
-    for(struct carro *p=carros; p<carros+*cadastrados; p++){
+    for(Carro *p=carros; p<carros+*cadastrados; p++){
         if(strcmp(p->placa, placa) == 0){
             encontrado = p;
             break;
         }
     }
     if(encontrado == NULL){
-        printf("Placa nao cadastrada!\n\n");
+        printf("\n[ERRO] Placa nao cadastrada!\n\n");
         return;
     }
-    for(struct carro *p=encontrado; p<carros+(*cadastrados-1); p++){
+    for(Carro *p=encontrado; p<carros+(*cadastrados-1); p++){
         *p = *(p + 1);
     }
     (*cadastrados)--;
-    printf("Carro excluido com sucesso!\n\n");
+    printf("\n[OK] Carro excluido com sucesso!\n\n");
 }
 
 int menu() {
     int op;
 
-    printf("===== MENU =====\n");
+    printf("\n--- PAINEL DE CARROS ---\n");
     printf("1 - Cadastrar carro\n");
     printf("2 - listar carros\n");
     printf("3 - Excluir carro\n");
@@ -754,132 +752,114 @@ int menu() {
 }
 
 //*Verifica se o funcionario não esta usando um código repetido para cadastrar o aluguel.
-int codigoExiste(int codigo) {
-    for(int i=0;i<qtdAlugueis;i++){
-        if(alugueis[i].codigo_aluguel == codigo)
+int codigoExiste(Aluguel alugueis[], int qtdAlugueis, int codigo) {
+    for(int i = 0; i < qtdAlugueis; i++) {
+        if(alugueis[i].codigo_aluguel == codigo) {
             return 1;
+        }
     }
+
     return 0;
 }
 
-void cadastrarAluguel() {
-    if(qtdAlugueis >= Maximocadastros){
+void cadastrarAluguel(Aluguel alugueis[], int *qtdAlugueis) {
+    int pos = *qtdAlugueis;
+
+    if(*qtdAlugueis >= Maximocadastros) {
         printf("Limite de alugueis atingido!");
         return;
     }
 
-    printf("\n|||| CADASTRAR ALUGUEL |||\n");
-    //*Aqui usamos a função codigoExiste para confirmar que não será repetido nenhum código de aluguel.
+    printf("\n--- CADASTRAR ALUGUEL ---\n");
+
     int codigo;
+
     do {
         printf("Codigo do aluguel: ");
         scanf("%d", &codigo);
 
-        if (codigoExiste(codigo)) {
+        if(codigoExiste(alugueis, *qtdAlugueis, codigo)) {
             printf("Esse codigo ja esta cadastrado!\n");
         }
 
-    } while (codigoExiste(codigo));
+    } while(codigoExiste(alugueis, *qtdAlugueis, codigo));
 
-    alugueis[qtdAlugueis].codigo_aluguel = codigo;
+    alugueis[pos].codigo_aluguel = codigo;
     getchar();
 
     int validarPlaca = 0;
 
-    while (!validarPlaca) {
-
+    while(!validarPlaca) {
         printf("Placa do carro: ");
-        fgets(alugueis[qtdAlugueis].placa, 8, stdin);
+        fgets(alugueis[pos].placa, 8, stdin);
 
-        alugueis[qtdAlugueis].placa[strcspn(alugueis[qtdAlugueis].placa, "\n")] = '\0';
+        alugueis[pos].placa[strcspn(alugueis[pos].placa, "\n")] = '\0';
 
-        if (strlen(alugueis[qtdAlugueis].placa) != 7) {
+        if(strlen(alugueis[pos].placa) != 7) {
             printf("Placa invalida!\n");
             continue;
         }
 
         int ok_placa = 1;
 
-        for (int i = 0; i < 7; i++) {
-
-            if (i < 3) {
-                if (!isalpha(alugueis[qtdAlugueis].placa[i]))
+        for(int i = 0; i < 7; i++) {
+            if(i < 3) {
+                if(!isalpha(alugueis[pos].placa[i])) {
                     ok_placa = 0;
-            }
-            else if (i == 3) {
-                if (!isdigit(alugueis[qtdAlugueis].placa[i]))
+                }
+            } else if(i == 3) {
+                if(!isdigit(alugueis[pos].placa[i])) {
                     ok_placa = 0;
-            }
-            else if (i == 4) {
-                if (!isalpha(alugueis[qtdAlugueis].placa[i]))
+                }
+            } else if(i == 4) {
+                if(!isalpha(alugueis[pos].placa[i])) {
                     ok_placa = 0;
-            }
-            else {
-                if (!isdigit(alugueis[qtdAlugueis].placa[i]))
+                }
+            } else {
+                if(!isdigit(alugueis[pos].placa[i])) {
                     ok_placa = 0;
+                }
             }
         }
-        if (!ok_placa) {
+
+        if(!ok_placa) {
             printf("Placa invalida!\n");
         } else {
             validarPlaca = 1;
         }
     }
+
     int valido = 0;
 
     getchar();
 
-    while (!valido) {
+    getchar();
 
-        printf("CPF do cliente: ");
+    printf("CPF do cliente: ");
+    fgets(alugueis[pos].cpf_cliente, 15, stdin);
+    alugueis[pos].cpf_cliente[strcspn(alugueis[pos].cpf_cliente, "\n")] = '\0';
 
-        fgets(alugueis[qtdAlugueis].cpf_cliente, 15, stdin);
-
-        alugueis[qtdAlugueis].cpf_cliente[strcspn(alugueis[qtdAlugueis].cpf_cliente, "\n")] = '\0';
-
-        if (strlen(alugueis[qtdAlugueis].cpf_cliente) != 14) {
-            printf("CPF invalido!\n");
-            continue;
-        }
-        int ok = 1;
-        for (int i = 0; i < 14; i++) {
-            if (i == 3 || i == 7) {
-                if (alugueis[qtdAlugueis].cpf_cliente[i] != '.') ok = 0;
-            }
-            else if (i == 11) {
-                if (alugueis[qtdAlugueis].cpf_cliente[i] != '-') ok = 0;
-            }
-            else {
-                if (!isdigit(alugueis[qtdAlugueis].cpf_cliente[i])) ok = 0;
-            }
-        }
-        if (!ok) {
-            printf("CPF invalido!\n");
-        } else {
-            valido = 1;
-        }
-    }
     printf("Data de retirada (dd/mm/aa): ");
-    scanf(" %10s", alugueis[qtdAlugueis].data_retirada);
+    scanf(" %10s", alugueis[pos].data_retirada);
 
     printf("Data de devolucao (dd/mm/aa): ");
-    scanf(" %10s", alugueis[qtdAlugueis].data_devolucao);
+    scanf(" %10s", alugueis[pos].data_devolucao);
 
     printf("Valor total: ");
-    scanf("%lf", &alugueis[qtdAlugueis].valor_total);
+    scanf("%lf", &alugueis[pos].valor_total);
 
-    qtdAlugueis++;
+    (*qtdAlugueis)++;
 
     printf("Aluguel cadastrado com sucesso!\n");
 }
 
 //*a função lista todos alugueis que ja foram adicionados, mostrando todos os dados. 
-void listarAlugueis() {
+void listarAlugueis(Aluguel alugueis[], int qtdAlugueis) {
     if(qtdAlugueis == 0){
         printf("Nenhum aluguel cadastrado.");
         return;
     }
-    printf("\n|||| LISTA DE ALUGUEiS ||||\n");
+    printf("\n--- LISTA DE ALUGUEIS ---\n");
 
     for(int i = 0; i < qtdAlugueis; i++){
         printf("\nAluguel %d\n", i + 1);
@@ -894,11 +874,11 @@ void listarAlugueis() {
 
 /*Além de possuir a listagem de todos alugueis, nessa função podemos procurar um aluguel especifico através do código
 o que acaba facilitando na hora para o funcionário.*/
-void buscarAluguel() {
+void buscarAluguel(Aluguel alugueis[], int qtdAlugueis) {
     int codigo;
     int encontrado = 0;
 
-    printf("\n|||| BUSCAR ALUGUEL ||||\n");
+    printf("\n--- BUSCAR ALUGUEL ---\n");
 
     printf("Digite o codigo do aluguel: ");
     scanf("%d", &codigo);
@@ -924,7 +904,7 @@ void buscarAluguel() {
 
 /*esta é a função para alterar o aluguel caso necessário, como por exemplo 
 algum erro de digitação cometido em algum dos campos.*/
-void alterarAluguel() {
+void alterarAluguel(Aluguel alugueis[], int qtdAlugueis) {
     int id;
     int encontrado = 0;
 
@@ -958,20 +938,20 @@ void alterarAluguel() {
     }
 }
 
-void excluirAluguel() {
+void excluirAluguel(Aluguel alugueis[], int *qtdAlugueis) {
     int id;
     int encontrado = 0;
 
     printf("Digite o codigo do aluguel que deseja excluir: ");
     scanf("%d", &id);
-    for (int i = 0; i < qtdAlugueis; i++) {
+    for (int i = 0; i < *qtdAlugueis; i++) {
 
         if (alugueis[i].codigo_aluguel == id) {
 
-            for (int j = i; j < qtdAlugueis - 1; j++) {
+            for (int j = i; j < *qtdAlugueis - 1; j++) {
                 alugueis[j] = alugueis[j + 1];
             }
-            qtdAlugueis--;
+            (*qtdAlugueis)--;
             encontrado = 1;
 
             printf("Aluguel excluido com sucesso!\n");
@@ -983,68 +963,120 @@ void excluirAluguel() {
     }
 }
 
-void menuAluguel() {
+void menuAluguel(Aluguel alugueis[], int *qtdAlugueis) {
     int opcao;
 
     do {
-        printf("\n|||| MENU ALUGUEL ||||\n");
-        printf("1 - Cadastrar\n");
-        printf("2 - Listar\n");
-        printf("3 - Alterar\n");
-        printf("4 - Excluir\n");
-        printf("5 - Buscar\n");
-        printf("0 - Sair\n");
+        printf("\n--- MENU ALUGUEL ---\n");
+        printf("1 - Cadastrar aluguel\n");
+        printf("2 - Listar alugueis\n");
+        printf("3 - Alterar aluguel\n");
+        printf("4 - Excluir aluguel\n");
+        printf("5 - Buscar aluguel\n");
+        printf("0 - Voltar ao menu principal\n");
         printf("Opcao: ");
         scanf("%d", &opcao);
 
         switch(opcao) {
             case 1:
-                cadastrarAluguel();
+                cadastrarAluguel(alugueis, qtdAlugueis);
                 break;
             case 2:
-                listarAlugueis();
+                listarAlugueis(alugueis, *qtdAlugueis);
                 break;
             case 3:
-                alterarAluguel();
+                alterarAluguel(alugueis, *qtdAlugueis);
                 break;
             case 4:
-                excluirAluguel();
+                excluirAluguel(alugueis, qtdAlugueis);
                 break;
             case 5:
-                buscarAluguel();
+                buscarAluguel(alugueis, *qtdAlugueis);
                 break;
             case 0:
                 break;
             default: 
-                printf("Opcao invalida!\n");
+                printf("[ERRO] Opcao invalida!\n");
         }
 
     } while(opcao != 0);
 }
 
-void submenuCarros() {
+void submenuCarros(Carro carros[], int *cadastrados) {
     int opcao;
+
     do {
         printf("\n--- CONTROLE DE FROTA ---\n");
-        printf("1. Cadastrar veiculo\n2. Listar frota\n3. Consultar veiculo\n4. Alterar veiculo\n5. Remover veiculo\n6. Voltar\nOpcao: ");
-        scanf("%d",&opcao);
-        char placa[8];
+        printf("1. Cadastrar veiculo\n");
+        printf("2. Listar frota\n");
+        printf("3. Consultar veiculo\n");
+        printf("4. Alterar veiculo\n");
+        printf("5. Remover veiculo\n");
+        printf("6. Voltar ao menu principal\n");
+        printf("Opcao: ");
+        scanf("%d", &opcao);
+
         switch(opcao) {
             case 1:
-                if(cadastrados >= MAX_CAR) { printf("Limite atingido\n"); break; }
-                if(cadastrarCarro(carros + cadastrados, carros, cadastrados)) cadastrados++;
+                if(*cadastrados >= MAX_CAR) {
+                    printf("Limite atingido\n");
+                    break;
+                }
+
+                if(cadastrarCarro(carros + *cadastrados, carros, *cadastrados)) {
+                    (*cadastrados)++;
+                }
                 break;
+
+            case 2:
+                listarCarros(carros, *cadastrados);
+                break;
+
+            case 3: {
+                char placa[8];
+                printf("Digite a placa: ");
+                scanf("%7s", placa);
+                consultarCarro(carros, *cadastrados, placa);
+                break;
+            }
+
+            case 4: {
+                char placa[8];
+                printf("Digite a placa: ");
+                scanf("%7s", placa);
+                alterarCarro(carros, *cadastrados, placa);
+                break;
+            }
+
+            case 5: {
+                char placa[8];
+                printf("Digite a placa: ");
+                scanf("%7s", placa);
+                excluirCarroPlaca(carros, cadastrados, placa);
+                break;
+            }
+
+            case 6:
+                printf("Voltando...\n");
+                break;
+
             default:
-                printf("Opcao integrada em desenvolvimento nesta versao.\n");
+                printf("Opcao invalida!\n");
         }
+
     } while(opcao != 6);
 }
 
-void submenuAlugueis() {
-    menuAluguel();
+void submenuAlugueis(Aluguel alugueis[], int *qtdAlugueis) {
+    menuAluguel(alugueis, qtdAlugueis);
 }
 
-void menuPrincipal(Cliente *vetorClientes) {
+void menuPrincipal( Cliente *vetorClientes,
+    Carro carros[],
+    int *cadastrados,
+    Aluguel alugueis[],
+    int *qtdAlugueis
+) {
     // Inicialização defensiva: malloc() não zera a memória alocada, então
     // os campos 'ativo' começariam com valor indeterminado (lixo de
     // memória) se não fossem explicitamente zerados aqui.
@@ -1071,9 +1103,9 @@ void menuPrincipal(Cliente *vetorClientes) {
             // qtdClientes, e não apenas uma cópia local.
             submenuClientes(vetorClientes, &qtdClientes);
         } else if(opcao == 2) {
-            submenuCarros();
+            submenuCarros(carros, cadastrados);;
         } else if(opcao == 3) {
-            submenuAlugueis();
+            submenuAlugueis(alugueis, qtdAlugueis);;
         } else if(opcao == 4) {
             printf("Encerrando o sistema de locacao...\n");
             return;
@@ -1086,7 +1118,16 @@ void menuPrincipal(Cliente *vetorClientes) {
 int main() {
     Cliente *vetorClientes = malloc(sizeof(Cliente) * MAX_CLIENTES);
     if(vetorClientes == NULL) return 1;
-    menuPrincipal(vetorClientes);
+
+    Carro carros[MAX_CAR];
+    int cadastrados = 0;
+
+    Aluguel alugueis[Maximocadastros];
+    int qtdAlugueis = 0;
+
+    menuPrincipal(vetorClientes, carros, &cadastrados, alugueis, &qtdAlugueis);
+
     free(vetorClientes);
+
     return 0;
 }
