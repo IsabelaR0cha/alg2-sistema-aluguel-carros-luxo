@@ -14,20 +14,16 @@
 // Inclui a definicao da estrutura Carro e a constante MAX_CAR.
 #include "modelos.h"
 
+Carro* buscarCarroPorPlaca(Carro *carros, int cadastrados, char *placa);
+
 int validarPlaca(char *placa);
-int placaExiste(Carro *carros, int cadastrados, char *placa);
-int cadastrarCarro(Carro *car, Carro *carros, int cadastrados);
+int cadastrarCarro(Carro *carros, int cadastrados);
 
-void consultarCarro(Carro *carros, int cadastrados, char *placa);
+void exibirDadosCarro(Carro *carro);
+void consultarCarro(Carro *carros, int cadastrados);
 void listarCarros(Carro *carros, int cadastrados);
-void alterarCarro(Carro *carros, int cadastrados, char *placa);
-void excluirCarroPlaca(
-    Carro *carros,
-    int *cadastrados,
-    char *placa
-);
-
-int menu(void);
+void alterarCarro(Carro *carros, int cadastrados);
+void excluirCarroPlaca(Carro *carros, int *cadastrados);
 void submenuCarros(Carro carros[], int *cadastrados);
 
 #endif

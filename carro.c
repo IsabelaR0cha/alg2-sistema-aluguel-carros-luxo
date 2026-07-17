@@ -3,6 +3,31 @@
 #include <ctype.h>
 
 #include "carro.h"
+#include "util.h"
+
+void pedirPlaca(char *placa){
+    printf("\nDigite a placa no formato (ABC1D23): ");
+    scanf("%7s", placa);
+}
+
+Carro* buscarCarroPorPlaca(Carro *carros, int cadastrados, char *placa){
+    //Recebe a lista de carros cadastrados, a quantidade de carros cadastrados e uma placa;
+    //Se a placa informada for igual a placa de algum carro cadastrado, retorna um ponteiro para o carro correspondente;
+    //Se não encontrar nenhuma placa compativel retorna NULL.
+    for(Carro *p = carros; p < (carros + cadastrados); p++){
+        if(strcmp(p->placa, placa) == 0){
+            return p;
+        }
+    }
+    return NULL;
+}
+
+void exibirDadosCarro(Carro *carro){
+    printf("\n\nPlaca: %s\n", carro->placa);
+    printf("Modelo: %s %s, %s\n", carro->marca, carro->modelo, carro->cor);
+    printf("Quilometragem: %.2f\n", carro->km);
+    printf("Valor Aluguel: %.2f\n\n", carro->valor);
+}
 
 int validarPlaca(char *placa) {
     //recebe uma placa e verifica se esta no fomato Mercosul e padroniza os caracteres em Maiusculos, valida = 1, invalida = 0.
@@ -24,23 +49,14 @@ int validarPlaca(char *placa) {
     }
 }
 
-int placaExiste(Carro *carros, int cadastrados, char *placa) {
-    //recebe a lista de carros, a quantidade de carros cadastrados e uma placa, placa já cadastrada = 1, não cadastrada = 0.
-    for(Carro *p=carros; p<carros+cadastrados; p++){
-        if(strcmp(placa, p->placa)==0){
-            return 1;
-        }
-    }
-    return 0;
-}
-
-int cadastrarCarro(Carro *car, Carro *carros, int cadastrados) {
-    //recebe uma posição de um vetor de carros, a lista de carros e a quantidade de carros.
+int cadastrarCarro(Carro *carros, int cadastrados) {
+    //recebe uma lista de carros e a quantidade de carros cadastrados.
     //placa invalida = 0, valida = 1;
-    printf("\nDigite a placa no formato (ABC1D23): "); scanf("%7s", car->placa);
+    Carro *car = carros + cadastrados;
+    pedirPlaca(car->placa);
     
     if(validarPlaca(car->placa)){
-        if(placaExiste(carros, cadastrados, car->placa)){
+        if(buscarCarroPorPlaca(carros, cadastrados, car->placa) != NULL){
             printf("\n[ERRO] Placa ja cadastrada.\n\n");
             return 0;
         }
@@ -57,29 +73,27 @@ int cadastrarCarro(Carro *car, Carro *carros, int cadastrados) {
     }
     else{
         printf("\n[ERRO] Placa Invalida!!\n\n");
-        return cadastrarCarro(car, carros, cadastrados);
+        return cadastrarCarro(carros, cadastrados);
     }
 }
 
-void consultarCarro(Carro *carros, int cadastrados, char *placa) {
-    //recebe uma lista de carros, a quantidade de cadastros e uma placa.
+void consultarCarro(Carro *carros, int cadastrados) {
+    //recebe uma lista de carros, a quantidade de cadastros e uma placa;
+    //usa as funções validarPlaca e buscarCarroPorPlaca para verificar a validade da placa e se já foi cadastrada;
+    //Se a Placa já tiver sido cadastrada usa a função exibirDadosCarro e exibe as caracteristicas do carro.
+    char placa[8];
+    pedirPlaca(placa);
+
     if(!validarPlaca(placa)){
         printf("\n[ERRO] Placa Invalida!\n\n");
         return;
     }
-    if(!placaExiste(carros, cadastrados, placa)){
+    Carro *encontrado = buscarCarroPorPlaca(carros, cadastrados, placa);
+    if(encontrado == NULL){
         printf("\n[ERRO] Placa nao Cadastrada!\n\n");
         return;
     }
-    for(Carro *p=carros; p<carros+cadastrados; p++){
-        if(strcmp(placa, p->placa)==0){
-            printf("Placa: %s\n", p->placa);
-            printf("Modelo: %s %s, %s\n", p->marca, p->modelo, p->cor);
-            printf("Quilometragem: %.2f\n", p->km);
-            printf("Valor Aluguel: %.2f\n\n", p->valor);
-            break;
-        }
-    }
+    exibirDadosCarro(encontrado);
 }
 
 void listarCarros(Carro *carros, int cadastrados) {
@@ -90,39 +104,59 @@ void listarCarros(Carro *carros, int cadastrados) {
         return;
     }
     for(Carro *p = carros; p < carros+cadastrados; p++){
-        printf("\nCarro %d:\n", i); i++;
-        printf("Placa: %s\n", p->placa);
-        printf("Modelo: %s %s, %s\n", p->marca, p->modelo, p->cor);
-        printf("Quilometragem: %.2f\n", p->km);
-        printf("Valor Aluguel: %.2f\n\n", p->valor);
+        printf("\nCarro %d:", i++);
+        exibirDadosCarro(p);
     }
 }
 
-void alterarCarro(Carro *carros, int cadastrados, char *placa) {
+void alterarCarro(Carro *carros, int cadastrados) {
     //recebe uma lista de carros, a quantidade de cadastros e uma placa.
+    char placa[8];
+    pedirPlaca(placa);
+
     if(!validarPlaca(placa)){
         printf("\n[ERRO] Placa Invalida!\n\n");
         return;
     }
-    if(!placaExiste(carros, cadastrados, placa)){
+    Carro *encontrado = buscarCarroPorPlaca(carros, cadastrados, placa);
+    if(encontrado == NULL){
         printf("\n[ERRO] Placa nao Cadastrada!\n\n");
         return;
     }
-    for(Carro *p=carros; p<carros+cadastrados; p++){
-        if(strcmp(placa, p->placa)==0){
-            printf("%s\n", p->placa);
-            printf("Nova marca do carro: "); scanf(" %[^\n]", p->marca);
-            printf("Novo Modelo: "); scanf(" %[^\n]", p->modelo);
-            printf("Nova cor: "); scanf(" %[^\n]", p->cor);
-            printf("Nova Quilometragem: "); scanf("%f", &p->km);
-            printf("Novo Valor do Aluguel: "); scanf("%f", &p->valor);
+    printf("\n\nO que voce deseja alterar ?\n");
+    printf("1. Marca\n");
+    printf("2. Modelo\n");
+    printf("3. Quilometragem\n");
+    printf("4. Valor do aluguel\n\n");
+    int opcao;
+    printf("Opcao: "); scanf("%d", &opcao);
+
+    switch(opcao) {
+        case 1:
+            limparBuffer();
+            printf("Digite a nova marca: "); scanf("%[^\n]", encontrado->marca);
             break;
-        }
+        case 2:
+            limparBuffer();
+            printf("Digite o novo modelo: "); scanf("%[^\n]", encontrado->modelo);
+            break;
+        case 3:
+            printf("Digite a nova Quilometragem: "); scanf("%f", &encontrado->km);
+            break;
+        case 4:
+            printf("Digite o novo valor do aluguel: "); scanf("%f", &encontrado->valor);
+            break;
+        default:
+            printf("Opcao invalida!\n");
+            break;
     }
 }
 
-void excluirCarroPlaca(Carro *carros, int *cadastrados, char *placa) {
+void excluirCarroPlaca(Carro *carros, int *cadastrados) {
     //recebe uma lista de carros, a quantidade de cadastros e uma placa.
+    char placa[8];
+    pedirPlaca(placa);
+
     Carro *encontrado = NULL;
     if(!validarPlaca(placa)){
         printf("\n[ERRO] Placa Invalida!\n");
@@ -143,21 +177,6 @@ void excluirCarroPlaca(Carro *carros, int *cadastrados, char *placa) {
     }
     (*cadastrados)--;
     printf("\n[OK] Carro excluido com sucesso!\n\n");
-}
-
-int menu() {
-    int op;
-
-    printf("\n--- PAINEL DE CARROS ---\n");
-    printf("1 - Cadastrar carro\n");
-    printf("2 - listar carros\n");
-    printf("3 - Excluir carro\n");
-    printf("4 - Consultar carro pela placa\n");
-    printf("5 - Alterar Carro pela placa\n");
-    printf("0 - Sair\n");
-    printf("Opcao: "); scanf("%d", &op);
-
-    return op;
 }
 
 void submenuCarros(Carro carros[], int *cadastrados) {
@@ -181,7 +200,7 @@ void submenuCarros(Carro carros[], int *cadastrados) {
                     break;
                 }
 
-                if(cadastrarCarro(carros + *cadastrados, carros, *cadastrados)) {
+                if(cadastrarCarro(carros, *cadastrados)) {
                     (*cadastrados)++;
                 }
                 break;
@@ -191,26 +210,17 @@ void submenuCarros(Carro carros[], int *cadastrados) {
                 break;
 
             case 3: {
-                char placa[8];
-                printf("Digite a placa: ");
-                scanf("%7s", placa);
-                consultarCarro(carros, *cadastrados, placa);
+                consultarCarro(carros, *cadastrados);
                 break;
             }
 
             case 4: {
-                char placa[8];
-                printf("Digite a placa: ");
-                scanf("%7s", placa);
-                alterarCarro(carros, *cadastrados, placa);
+                alterarCarro(carros, *cadastrados);
                 break;
             }
 
             case 5: {
-                char placa[8];
-                printf("Digite a placa: ");
-                scanf("%7s", placa);
-                excluirCarroPlaca(carros, cadastrados, placa);
+                excluirCarroPlaca(carros, cadastrados);
                 break;
             }
 
