@@ -1,61 +1,102 @@
-/*
- * Arquivo: aluguel.h
- * Finalidade: declarar as funcoes utilizadas no gerenciamento de alugueis.
- *
- * Este arquivo informa quais operacoes do modulo de alugueis podem ser
- * utilizadas pelos outros arquivos do sistema. As implementacoes dessas
- * funcoes encontram-se no arquivo aluguel.c.
- */
-
-// Protege o header contra inclusoes repetidas durante a compilacao.
 #ifndef ALUGUEL_H
 #define ALUGUEL_H
 
-/*
- * Inclui modelos.h porque as declaracoes abaixo utilizam a estrutura
- * Aluguel e a constante Maximocadastros.
- */
 #include "modelos.h"
+#include "cliente.h"
+#include "carro.h"
 
-int codigoExiste(
-    Aluguel alugueis[],
-    int qtdAlugueis,
-    int codigo
+// BUSCAS
+
+void buscarAluguelporcodigo(
+    Aluguel *alugueis,
+    int qtdAlugueis
 );
 
-void cadastrarAluguel(
-    Aluguel alugueis[],
-    int *qtdAlugueis
+
+int existeAluguelPorCpf(
+    const Aluguel *alugueis,
+    int qtdAlugueis,
+    const char *cpf
+);
+
+int existeAluguelPorPlaca(
+    const Aluguel *alugueis,
+    int qtdAlugueis,
+    const char *placa
+);
+
+
+
+//  ALOCAÇÃO
+   
+
+int aumentarVetorAlugueis(
+    Aluguel **alugueis,
+    int qtdAlugueis
+);
+
+//  CRUD
+   
+
+int cadastrarAluguel(
+    Aluguel **alugueis,
+    int *qtdAlugueis,
+    Cliente *clientes,
+    int qtdClientes,
+    Carro *carros,
+    int qtdCarros
 );
 
 void listarAlugueis(
-    Aluguel alugueis[],
+    const Aluguel *alugueis,
     int qtdAlugueis
 );
 
-void buscarAluguel(
-    Aluguel alugueis[],
+
+int alterarAluguel(
+    Aluguel *alugueis,
     int qtdAlugueis
 );
 
-void alterarAluguel(
-    Aluguel alugueis[],
-    int qtdAlugueis
-);
-
-void excluirAluguel(
-    Aluguel alugueis[],
+int excluirAluguel(
+    Aluguel **alugueis,
     int *qtdAlugueis
 );
+
+/* ===========================
+   PERSISTÊNCIA
+   =========================== */
+
+int salvarAlugueis(
+    const Aluguel *alugueis,
+    int qtdAlugueis
+);
+
+int carregarAlugueis(
+    Aluguel **alugueis,
+    int *qtdAlugueis
+);
+
+/* ===========================
+   MENU
+   =========================== */
 
 void menuAluguel(
-    Aluguel alugueis[],
-    int *qtdAlugueis
+    Aluguel **alugueis,
+    int *qtdAlugueis,
+    Cliente *clientes,
+    int qtdClientes,
+    Carro *carros,
+    int qtdCarros
 );
 
 void submenuAlugueis(
-    Aluguel alugueis[],
-    int *qtdAlugueis
+    Aluguel **alugueis,
+    int *qtdAlugueis,
+    Cliente *clientes,
+    int qtdClientes,
+    Carro *carros,
+    int qtdCarros
 );
 
 #endif

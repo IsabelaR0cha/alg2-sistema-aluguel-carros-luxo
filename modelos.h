@@ -42,8 +42,7 @@ typedef struct {
     int codigo_aluguel;
     char cpf_cliente[15];
     char placa[8];
-    char data_retirada[11];
-    char data_devolucao[11];
+    int dias;
     double valor_total;
 } Aluguel;
 
