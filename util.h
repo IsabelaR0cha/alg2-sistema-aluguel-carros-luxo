@@ -3,5 +3,6 @@
 
 void limparTexto(char *str);
 void limparBuffer(void);
+void stringParaMinusculo(char *str);
 
 #endif

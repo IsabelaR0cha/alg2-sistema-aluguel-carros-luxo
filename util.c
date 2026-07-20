@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 
 /*
  * limparTexto
@@ -32,4 +33,12 @@ void limparTexto(char *str) {
 void limparBuffer() {
     int c;
     while((c = getchar()) != '\n' && c != EOF);
+}
+
+void stringParaMinusculo(char *str) {
+    for (char *p = str; *p != '\0'; p++) {
+        if (isalpha(*p)) {
+            *p = tolower(*p);
+        }
+    }
 }

@@ -36,6 +36,7 @@ typedef struct {
     char cor[20];
     char placa[8];
     float km, valor;
+    int alugado;
 } Carro;
 
 typedef struct {

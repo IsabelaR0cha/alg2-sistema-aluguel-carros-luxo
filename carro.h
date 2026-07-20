@@ -18,7 +18,11 @@ Carro* buscarCarroPorPlaca(Carro *carros, int cadastrados, char *placa);
 
 int validarPlaca(char *placa);
 int cadastrarCarro(Carro *carros, int cadastrados);
+int validarMarca(char *marca);
+int validarModelo(char *modelo);
+int validarCor(char *cor);
 
+void pedirPlaca(char *placa);
 void exibirDadosCarro(Carro *carro);
 void consultarCarro(Carro *carros, int cadastrados);
 void listarCarros(Carro *carros, int cadastrados);
