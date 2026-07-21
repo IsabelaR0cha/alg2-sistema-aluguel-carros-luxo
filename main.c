@@ -46,7 +46,7 @@ void menuPrincipal(
         } else if(opcao == 2) {
             submenuCarros(carros, cadastrados);
         } else if(opcao == 3) {
-            submenuAlugueis(&alugueis, qtdAlugueis, vetorClientes, qtdClientes, carros, *cadastrados);;
+            submenuAlugueis(&alugueis, qtdAlugueis, *vetorClientes, *qtdClientes, carros, *cadastrados);;
         } else if(opcao == 4) {
             printf("Encerrando o sistema de locacao...\n");
             return;
