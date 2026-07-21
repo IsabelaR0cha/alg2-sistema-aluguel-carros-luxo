@@ -1,36 +1,20 @@
 #include <stdio.h>
-<<<<<<< HEAD
-=======
 #include <stdlib.h>
->>>>>>> 52c5e5b (finalizando modulo de clientes com alocacao dinamica e fazendo os demais ajustes solicitados)
 #include <string.h>
 #include <ctype.h>
 
 #include "cliente.h"
 #include "util.h"
 
-<<<<<<< HEAD
-int buscarPorCpf(Cliente *vetor, int qtd, char *cpfBusca) {
-    // Fail-fast: ignoramos clientes com ativo == 0, pois representam
-    // registros "excluídos" (soft delete) e não devem ser encontrados.
-    for(int i = 0; i < MAX_CLIENTES; i++)
-        if(vetor[i].ativo == 1 && strcmp(vetor[i].cpf, cpfBusca) == 0) {
-=======
 // 1. Funções de Busca (adaptadas para usar 'qtd' e retornar o índice correto)
 int buscarPorCpf(Cliente *vetor, int qtd, char *cpfBusca) {
     for(int i = 0; i < qtd; i++)
         if(strcmp(vetor[i].cpf, cpfBusca) == 0) {
->>>>>>> 52c5e5b (finalizando modulo de clientes com alocacao dinamica e fazendo os demais ajustes solicitados)
             return i;
         }
     return -1;
 }
 
-<<<<<<< HEAD
-int buscarPorEmail(Cliente *vetor, int qtd, char *emailBusca) {
-    for(int i = 0; i < MAX_CLIENTES; i++)
-        if(vetor[i].ativo == 1 && strcmp(vetor[i].email, emailBusca) == 0) {
-=======
 int buscarPorNome(Cliente *vetor, int qtd, char *nomeBusca) {
     for(int i = 0; i < qtd; i++) {
         if(strstr(vetor[i].nome, nomeBusca) != NULL) {
@@ -52,43 +36,24 @@ int buscarPorCnh(Cliente *vetor, int qtd, char *cnhBusca) {
 int buscarPorEmail(Cliente *vetor, int qtd, char *emailBusca) {
     for(int i = 0; i < qtd; i++)
         if(strcmp(vetor[i].email, emailBusca) == 0) {
->>>>>>> 52c5e5b (finalizando modulo de clientes com alocacao dinamica e fazendo os demais ajustes solicitados)
             return i;
         }
     return -1;
 }
 
 int buscarPorTelefone(Cliente *vetor, int qtd, char *telefoneBusca) {
-<<<<<<< HEAD
-    for(int i = 0; i < MAX_CLIENTES; i++)
-        if(vetor[i].ativo == 1 && strcmp(vetor[i].telefone, telefoneBusca) == 0) {
-=======
     for(int i = 0; i < qtd; i++)
         if(strcmp(vetor[i].telefone, telefoneBusca) == 0) {
->>>>>>> 52c5e5b (finalizando modulo de clientes com alocacao dinamica e fazendo os demais ajustes solicitados)
             return i;
         }
     return -1;
 }
 
-<<<<<<< HEAD
-=======
 // 2. Validações padrão mantidas e blindadas
->>>>>>> 52c5e5b (finalizando modulo de clientes com alocacao dinamica e fazendo os demais ajustes solicitados)
 int validarDDD(char *telefone) {
     // Lista fixa com todos os DDDs oficiais brasileiros.
     const char *dddsValidos[] = {
         "11", "12", "13", "14", "15", "16", "17", "18", "19",
-<<<<<<< HEAD
-        "21", "22", "24", "27", "28",
-        "31", "32", "33", "34", "35", "37", "38",
-        "41", "42", "43", "44", "45", "46", "47", "48", "49",
-        "51", "53", "54", "55",
-        "61", "62", "63", "64", "65", "66", "67", "68", "69",
-        "71", "73", "74", "75", "77", "79",
-        "81", "82", "83", "84", "85", "86", "87", "88", "89",
-        "91", "92", "93", "94", "95", "96", "97", "98", "99"
-=======
         "21", "22", "24", "27", "28", "31", "32", "33", "34", 
         "35", "37", "38", "41", "42", "43", "44", "45", "46", 
         "47", "48", "49", "51", "53", "54", "55", "61", "62", 
@@ -96,7 +61,6 @@ int validarDDD(char *telefone) {
         "74", "75", "77", "79", "81", "82", "83", "84", "85", 
         "86", "87", "88", "89", "91", "92", "93", "94", "95", 
         "96", "97", "98", "99"
->>>>>>> 52c5e5b (finalizando modulo de clientes com alocacao dinamica e fazendo os demais ajustes solicitados)
     };
 
     char ddd[3];
@@ -141,11 +105,7 @@ int validarCnhCarro(char *cnh) {
 }
 
 int ehCpfValido(char *cpf) {
-<<<<<<< HEAD
-    // Fail-fast: testa o tamanho antes de percorrer caractere a caractere,
-=======
     // Testa o tamanho antes de percorrer caractere a caractere,
->>>>>>> 52c5e5b (finalizando modulo de clientes com alocacao dinamica e fazendo os demais ajustes solicitados)
     // evitando trabalho desnecessário caso o CPF já esteja claramente errado.
     if(strlen(cpf) != 11) {
         return 0;
@@ -209,25 +169,6 @@ int validarNome(char *nome) {
     return 1;
 }
 
-<<<<<<< HEAD
-void cadastrarCliente(Cliente *vetor, int *qtd) {
-    int pos = -1;
-
-    // Procura a primeira posição livre (ativo == 0) no vetor para reutilizar
-    // o espaço de um cliente excluído anteriormente, em vez de exigir que
-    // o vetor cresça — já que seu tamanho é fixo (MAX_CLIENTES).
-    for(int i = 0; i < MAX_CLIENTES; i++) {
-        if(vetor[i].ativo == 0) {
-            pos = i;
-            break;
-        }
-    }
-
-    if(pos == -1) {
-        printf("\n[ERRO] Limite de clientes atingido!\n");
-        return;
-    }
-=======
 // 3. Cadastrar Cliente com Alocação Dinâmica e Realocação via realloc
 void cadastrarCliente(Cliente **vetor, int *qtd, int *capacidade) {
 
@@ -251,7 +192,6 @@ void cadastrarCliente(Cliente **vetor, int *qtd, int *capacidade) {
 
     // A próxima posição livre para inserção é a quantidade atual de clientes.
     int pos = *qtd;
->>>>>>> 52c5e5b (finalizando modulo de clientes com alocacao dinamica e fazendo os demais ajustes solicitados)
 
     char cpfTemp[15];
     printf("\nCPF (apenas 11 numeros): ");
@@ -259,22 +199,14 @@ void cadastrarCliente(Cliente **vetor, int *qtd, int *capacidade) {
     fgets(cpfTemp, 15, stdin);
     limparTexto(cpfTemp);
 
-<<<<<<< HEAD
-    // Fail-fast: valida o formato do CPF antes de verificar duplicidade,
-=======
     // Valida o formato do CPF antes de verificar duplicidade,
->>>>>>> 52c5e5b (finalizando modulo de clientes com alocacao dinamica e fazendo os demais ajustes solicitados)
     // pois não há motivo para buscar no vetor um CPF que já é inválido.
     if(!ehCpfValido(cpfTemp)) {
         printf("\n[ERRO] CPF invalido! Digite apenas 11 numeros.\n");
         return;
     }
 
-<<<<<<< HEAD
-    if(buscarPorCpf(vetor, *qtd, cpfTemp) != -1) {
-=======
     if(buscarPorCpf(*vetor, *qtd, cpfTemp) != -1) {
->>>>>>> 52c5e5b (finalizando modulo de clientes com alocacao dinamica e fazendo os demais ajustes solicitados)
         printf("\n[ERRO] CPF duplicado!\n");
         return;
     }
@@ -325,11 +257,7 @@ void cadastrarCliente(Cliente **vetor, int *qtd, int *capacidade) {
         return;
     }
 
-<<<<<<< HEAD
-    if(buscarPorTelefone(vetor, *qtd, telefoneTemp) != -1) {
-=======
     if(buscarPorTelefone(*vetor, *qtd, telefoneTemp) != -1) {
->>>>>>> 52c5e5b (finalizando modulo de clientes com alocacao dinamica e fazendo os demais ajustes solicitados)
         printf("\n[ERRO] Telefone duplicado!\n");
         return;
     }
@@ -344,11 +272,7 @@ void cadastrarCliente(Cliente **vetor, int *qtd, int *capacidade) {
         return;
     }
 
-<<<<<<< HEAD
-    if(buscarPorEmail(vetor, *qtd, emailTemp) != -1) {
-=======
     if(buscarPorEmail(*vetor, *qtd, emailTemp) != -1) {
->>>>>>> 52c5e5b (finalizando modulo de clientes com alocacao dinamica e fazendo os demais ajustes solicitados)
         printf("\n[ERRO] E-mail duplicado!\n");
         return;
     }
@@ -373,16 +297,6 @@ void cadastrarCliente(Cliente **vetor, int *qtd, int *capacidade) {
         return;
     }
 
-<<<<<<< HEAD
-    strcpy(vetor[pos].cpf, cpfTemp);
-    vetor[pos].idade = idadeTemp;
-    strcpy(vetor[pos].cnh, cnhTemp);
-    strcpy(vetor[pos].telefone, telefoneTemp);
-    strcpy(vetor[pos].email, emailTemp);
-    strcpy(vetor[pos].nome, nomeTemp);
-    strcpy(vetor[pos].cep, cepTemp);
-    vetor[pos].ativo = 1;
-=======
     strcpy((*vetor)[pos].cpf, cpfTemp);
     (*vetor)[pos].idade = idadeTemp;
     strcpy((*vetor)[pos].cnh, cnhTemp);
@@ -392,46 +306,11 @@ void cadastrarCliente(Cliente **vetor, int *qtd, int *capacidade) {
     strcpy((*vetor)[pos].cep, cepTemp);
     (*vetor)[pos].ativo = 1;
     (*vetor)[pos].alugado = 1; // 1 = Livre por padrão para exclusão futura
->>>>>>> 52c5e5b (finalizando modulo de clientes com alocacao dinamica e fazendo os demais ajustes solicitados)
     (*qtd)++;
 
     printf("\n[OK] Cliente cadastrado com sucesso!\n");
 }
 
-<<<<<<< HEAD
-void listarClientes(Cliente *vetor, int qtd) {
-    int total = 0;
-
-    for(int i = 0; i < MAX_CLIENTES; i++) {
-        if(vetor[i].ativo == 1) {
-            printf("\nNome: %s\nCPF: %s\nIdade: %d\nCNH: %s\nTelefone: %s\nEmail: %s\nCEP: %s\n",
-                   vetor[i].nome, vetor[i].cpf, vetor[i].idade, vetor[i].cnh, vetor[i].telefone, vetor[i].email, vetor[i].cep);
-            total++;
-        }
-    }
-    if(total == 0) {
-        printf("\nNenhum cliente cadastrado.\n");
-    }
-}
-
-void consultarCliente(Cliente *vetor, int qtd) {
-    char cpfBusca[15];
-    printf("\nCPF para buscar: ");
-    limparBuffer();
-    fgets(cpfBusca, 15, stdin);
-    limparTexto(cpfBusca);
-
-    int pos = buscarPorCpf(vetor, qtd, cpfBusca);
-    if(pos == -1) {
-        printf("\n[ERRO] Nao encontrado!\n");
-    } else {
-        printf("\n[OK] Encontrado!\nNome: %s\nCPF: %s\nEmail: %s\n", vetor[pos].nome, vetor[pos].cpf, vetor[pos].email);
-    }
-}
-
-void alterarCliente(Cliente *vetor, int qtd) {
-    char cpfBusca[15], novoCpf[15], novoTelefone[20], novoEmail[100], novaCnh[20], novoNome[100], novoCep[10];
-=======
 // 4. Listar Clientes perfeitamente baseado na quantidade real 'qtd'
 void listarClientes(Cliente *vetor, int qtd) {
     if(qtd == 0) {
@@ -441,6 +320,7 @@ void listarClientes(Cliente *vetor, int qtd) {
 
     for(int i = 0; i < qtd; i++) {
         printf("\n--- Cliente %d ---\n", i + 1);
+        
         printf("Nome: %s\nCPF: %s\nIdade: %d\nCNH: %s\nTelefone: %s\nEmail: %s\nCEP: %s\nStatus Aluguel: %s\n",
                vetor[i].nome, vetor[i].cpf, vetor[i].idade, vetor[i].cnh, 
                vetor[i].telefone, vetor[i].email, vetor[i].cep,
@@ -500,7 +380,6 @@ void consultarCliente(Cliente *vetor, int qtd) {
 // 6. Alterar Cliente (menu de edição por campo sem alterar o CPF)
 void alterarCliente(Cliente *vetor, int qtd) {
     char cpfBusca[15], novoTelefone[20], novoEmail[100], novaCnh[20], novoNome[100], novoCep[10];
->>>>>>> 52c5e5b (finalizando modulo de clientes com alocacao dinamica e fazendo os demais ajustes solicitados)
     int novaIdade;
 
     printf("\nCPF para alterar: ");
@@ -515,38 +394,10 @@ void alterarCliente(Cliente *vetor, int qtd) {
     }
 
     int opcaoAlterar = 0;
-<<<<<<< HEAD
-    printf("\nO que deseja alterar?\n1. CPF\n2. Nome\n3. Idade\n4. CNH\n5. Telefone\n6. Email\n7. CEP\nEscolha: ");
-    scanf("%d", &opcaoAlterar);
-
-    if(opcaoAlterar == 1) {
-        printf("Novo CPF: ");
-        limparBuffer();
-        fgets(novoCpf, 15, stdin);
-        limparTexto(novoCpf);
-
-        if(!ehCpfValido(novoCpf)) {
-            printf("\n[ERRO] CPF invalido!\n");
-            return;
-        }
-
-        // Verifica duplicidade somente depois de confirmar que o formato
-        // do novo CPF é válido (fail-fast), evitando busca desnecessária.
-        if(buscarPorCpf(vetor, qtd, novoCpf) != -1) {
-            printf("\n[ERRO] CPF ja cadastrado!\n");
-            return;
-        }
-
-        strcpy(vetor[pos].cpf, novoCpf);
-        printf("\n[OK] CPF atualizado!\n");
-
-    } else if(opcaoAlterar == 2) {
-=======
     printf("\nO que deseja alterar?\n1. Nome\n2. Idade\n3. CNH\n4. Telefone\n5. Email\n6. CEP\nEscolha: ");
     scanf("%d", &opcaoAlterar);
 
     if(opcaoAlterar == 1) {
->>>>>>> 52c5e5b (finalizando modulo de clientes com alocacao dinamica e fazendo os demais ajustes solicitados)
         printf("Novo Nome: ");
         limparBuffer();
         fgets(novoNome, 100, stdin);
@@ -560,19 +411,12 @@ void alterarCliente(Cliente *vetor, int qtd) {
         strcpy(vetor[pos].nome, novoNome);
         printf("\n[OK] Nome atualizado!\n");
 
-<<<<<<< HEAD
-    } else if(opcaoAlterar == 3) {
-=======
     } else if(opcaoAlterar == 2) {
->>>>>>> 52c5e5b (finalizando modulo de clientes com alocacao dinamica e fazendo os demais ajustes solicitados)
         printf("Nova Idade: ");
         limparBuffer();
         scanf("%d", &novaIdade);
         limparBuffer();
 
-        // Reaproveita a mesma regra usada no cadastro (validarIdade),
-        // em vez de repetir a comparação "novaIdade < 18" isoladamente,
-        // para manter uma única fonte de verdade sobre o que é válido.
         if(!validarIdade(novaIdade)) {
             printf("\n[ERRO] Idade invalida!\n");
             return;
@@ -581,11 +425,7 @@ void alterarCliente(Cliente *vetor, int qtd) {
         vetor[pos].idade = novaIdade;
         printf("\n[OK] Idade atualizada!\n");
 
-<<<<<<< HEAD
-    } else if(opcaoAlterar == 4) {
-=======
     } else if(opcaoAlterar == 3) {
->>>>>>> 52c5e5b (finalizando modulo de clientes com alocacao dinamica e fazendo os demais ajustes solicitados)
         printf("Nova CNH: ");
         limparBuffer();
         fgets(novaCnh, 20, stdin);
@@ -599,11 +439,7 @@ void alterarCliente(Cliente *vetor, int qtd) {
         strcpy(vetor[pos].cnh, novaCnh);
         printf("\n[OK] CNH atualizada!\n");
 
-<<<<<<< HEAD
-    } else if(opcaoAlterar == 5) {
-=======
     } else if(opcaoAlterar == 4) {
->>>>>>> 52c5e5b (finalizando modulo de clientes com alocacao dinamica e fazendo os demais ajustes solicitados)
         printf("Novo Telefone: ");
         limparBuffer();
         fgets(novoTelefone, 20, stdin);
@@ -632,18 +468,12 @@ void alterarCliente(Cliente *vetor, int qtd) {
         strcpy(vetor[pos].telefone, novoTelefone);
         printf("\n[OK] Telefone atualizado!\n");
 
-<<<<<<< HEAD
-    } else if(opcaoAlterar == 6) {
-=======
     } else if(opcaoAlterar == 5) {
->>>>>>> 52c5e5b (finalizando modulo de clientes com alocacao dinamica e fazendo os demais ajustes solicitados)
         printf("Novo Email: ");
         limparBuffer();
         fgets(novoEmail, 100, stdin);
         limparTexto(novoEmail);
 
-        // Mesma validação de formato aplicada no cadastro original,
-        // garantindo que a alteração não relaxe uma regra já existente.
         if(!validarEmail(novoEmail)) {
             printf("\n[ERRO] Email invalido!\n");
             return;
@@ -657,11 +487,7 @@ void alterarCliente(Cliente *vetor, int qtd) {
         strcpy(vetor[pos].email, novoEmail);
         printf("\n[OK] Email atualizado!\n");
 
-<<<<<<< HEAD
-    } else if(opcaoAlterar == 7) {
-=======
     } else if(opcaoAlterar == 6) {
->>>>>>> 52c5e5b (finalizando modulo de clientes com alocacao dinamica e fazendo os demais ajustes solicitados)
         printf("Novo CEP: ");
         limparBuffer();
         fgets(novoCep, 10, stdin);
@@ -680,46 +506,20 @@ void alterarCliente(Cliente *vetor, int qtd) {
     }
 }
 
-<<<<<<< HEAD
-void excluirCliente(Cliente *vetor, int *qtd) {
-    char cpfBusca[15];
-    printf("\nCPF para excluir: ");
-=======
 // 7. Exclusão com compactação real (Shift) e validação do campo alugado
 void excluirCliente(Cliente **vetor, int *qtd, int *capacidade) {
     char cpfBusca[15];
     printf("\nCPF do cliente para excluir: ");
->>>>>>> 52c5e5b (finalizando modulo de clientes com alocacao dinamica e fazendo os demais ajustes solicitados)
     limparBuffer();
     fgets(cpfBusca, 15, stdin);
     limparTexto(cpfBusca);
 
-<<<<<<< HEAD
-    int pos = buscarPorCpf(vetor, *qtd, cpfBusca);
-    if(pos == -1) {
-        printf("\n[ERRO] Nao encontrado!\n");
-        return;
-    }
-
-    // Soft delete: apenas desativamos o registro em vez de deslocar todos
-    // os elementos seguintes do vetor para "tapar o buraco". Isso é O(1)
-    // em vez de O(n), e a posição liberada será reaproveitada no próximo
-    // cadastro (ver busca por 'ativo == 0' em cadastrarCliente).
-    vetor[pos].ativo = 0;
-    (*qtd)--;
-
-    printf("\n[OK] Removido com sucesso!\n");
-}
-
-void submenuClientes(Cliente *vetor, int *qtd) {
-=======
     int pos = buscarPorCpf(*vetor, *qtd, cpfBusca);
     if(pos == -1) {
         printf("\n[ERRO] Cliente nao encontrado!\n");
         return;
     }
 
-    // Verificar o campo de aluguel
     if((*vetor)[pos].alugado == 0) {
         printf("\n[BLOQUEIO] Cliente possui aluguel ativo (alugado == 0). Nao e permitido exclui-lo!\n");
         return;
@@ -731,7 +531,7 @@ void submenuClientes(Cliente *vetor, int *qtd) {
     }
     (*qtd)--;
 
-    // Redução dinâmica de memória (realloc) caso haja folga e capacidade mínima segura
+    // Redução de memória opcional via realloc
     if (*capacidade > 5 && *qtd <= *capacidade - 5) {
         *capacidade -= 5;
         Cliente *temp = realloc(*vetor, (*capacidade) * sizeof(Cliente));
@@ -743,9 +543,7 @@ void submenuClientes(Cliente *vetor, int *qtd) {
     printf("\n[OK] Cliente excluido com sucesso e vetor compactado!\n");
 }
 
-
 void submenuClientes(Cliente **vetor, int *qtd, int *capacidade) {
->>>>>>> 52c5e5b (finalizando modulo de clientes com alocacao dinamica e fazendo os demais ajustes solicitados)
     int opcao = 0;
     while(opcao != 6) {
         printf("\n--- PAINEL DE CLIENTES ---\n");
@@ -759,18 +557,7 @@ void submenuClientes(Cliente **vetor, int *qtd, int *capacidade) {
         scanf("%d", &opcao);
 
         if(opcao == 1) {
-<<<<<<< HEAD
-            cadastrarCliente(vetor, qtd);
-        } else if(opcao == 2) {
-            listarClientes(vetor, *qtd);
-        } else if(opcao == 3) {
-            consultarCliente(vetor, *qtd);
-        } else if(opcao == 4) {
-            alterarCliente(vetor, *qtd);
-        } else if(opcao == 5) {
-            excluirCliente(vetor, qtd);
-=======
-            cadastrarCliente(vetor, qtd, capacidade); // Repassa os ponteiros duplos
+            cadastrarCliente(vetor, qtd, capacidade);
         } else if(opcao == 2) {
             listarClientes(*vetor, *qtd);
         } else if(opcao == 3) {
@@ -778,8 +565,7 @@ void submenuClientes(Cliente **vetor, int *qtd, int *capacidade) {
         } else if(opcao == 4) {
             alterarCliente(*vetor, *qtd);
         } else if(opcao == 5) {
-            excluirCliente(vetor, qtd, capacidade); // Repassa os ponteiros duplos
->>>>>>> 52c5e5b (finalizando modulo de clientes com alocacao dinamica e fazendo os demais ajustes solicitados)
+            excluirCliente(vetor, qtd, capacidade);
         } else if(opcao == 6) {
             printf("Voltando...\n");
             return;
