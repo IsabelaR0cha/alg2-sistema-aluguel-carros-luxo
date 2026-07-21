@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdlib.h>
 
 #include "carro.h"
 #include "util.h"
@@ -115,12 +116,18 @@ Carro* buscarCarroPorPlaca(Carro *carros, int cadastrados, char *placa){
 }
 
 
-int cadastrarCarro(Carro *carros, int cadastrados) {
+int cadastrarCarro(Carro **carros, int *cadastrados) {
     // Recebe o vetor de carros e o total de cadastros para registrar um novo veículo.
     // Valida a placa, marca, modelo, cor, quilometragem e aluguel, forçando redigitação em caso de erro.
     // Retorna 1 para sucesso ou 0 se a placa já existir no sistema.
-
-    Carro *car = carros + cadastrados; //Calcula a posição do vetor em que o carro sera cadastrado.
+    Carro *temp = (Carro*) realloc(*carros, (*cadastrados + 1) * sizeof(Carro));
+    if (temp == NULL) {
+        printf("[ERRO] Falha ao alocar memoria para o novo carro!\n\n");
+        exit(1);
+    }
+    *carros = temp;
+    
+    Carro *car = *carros + *cadastrados; //Calcula a posição do vetor em que o carro sera cadastrado.
     
     do {
         pedirPlaca(car->placa);
@@ -129,7 +136,7 @@ int cadastrarCarro(Carro *carros, int cadastrados) {
             continue;
         }
         
-        if (buscarCarroPorPlaca(carros, cadastrados, car->placa) != NULL) {
+        if (buscarCarroPorPlaca(*carros, *cadastrados, car->placa) != NULL) {
             printf("[ERRO] Placa ja cadastrada no sistema.\n\n");
             return 0;
         }
@@ -184,8 +191,9 @@ int cadastrarCarro(Carro *carros, int cadastrados) {
         }
     } while (car->valor <= 0);
 
-    printf("[OK] Carro cadastrado com sucesso!\n");
     car->alugado = 1;
+    (*cadastrados)++;
+    printf("[OK] Carro cadastrado com sucesso!\n");
     return 1;
 }
 
@@ -331,7 +339,12 @@ void alterarCarro(Carro *carros, int cadastrados) {
     }
 }
 
-void excluirCarroPlaca(Carro *carros, int *cadastrados) {
+void excluirCarroPlaca(Carro **carros, int *cadastrados) {
+    if (*cadastrados == 0 || *carros == NULL) {
+        printf("[ERRO] Nenhum carro cadastrado para excluir!\n\n");
+        return;
+    }
+
     char placa[8];
     Carro *encontrado = NULL;
 
@@ -341,24 +354,79 @@ void excluirCarroPlaca(Carro *carros, int *cadastrados) {
             printf("[ERRO] Placa Invalida!\n\n");
             continue;
         }
-        encontrado = buscarCarroPorPlaca(carros, *cadastrados, placa);
+        encontrado = buscarCarroPorPlaca(*carros, *cadastrados, placa);
         if(encontrado == NULL){
             printf("[ERRO] Placa nao cadastrada!\n\n");
         }
     } while(!validarPlaca(placa) || encontrado == NULL);
-    if(encontrado->alugado){
-        for(Carro *p = encontrado; p < carros + (*cadastrados - 1); p++){
-            *p = *(p + 1);
-        }
-        (*cadastrados)--;
-        printf("[OK] Carro excluido com sucesso!\n\n");
-        }
-    else{
-        printf("[ERRO] Veiculo alugado! Não é possivel concluir a exclusao.");
+
+    if(encontrado->alugado == 0){
+        printf("[ERRO] Veiculo possui aluguel ativo (alugado == 0)! Nao e possivel excluir.\n\n");
+        return;
     }
+
+    for(Carro *p = encontrado; p < *carros + (*cadastrados - 1); p++){
+        *p = *(p + 1);
+    }
+    (*cadastrados)--;
+
+    if (*cadastrados > 0) {
+        *carros = (Carro*) realloc(*carros, (*cadastrados) * sizeof(Carro));
+    } else {
+        free(*carros);
+        *carros = NULL;
+    }
+
+    printf("[OK] Carro excluido com sucesso!\n\n");
 }
 
-void submenuCarros(Carro carros[], int *cadastrados) {
+
+void salvarCarros(Carro *carros, int cadastrados){
+    FILE *arquivo = fopen("carros.bin", "wb");
+    if(arquivo == NULL){
+        printf("[ERRO] Não foi possivel abrir o arquivo carros.bin.\n\n");
+        exit(1);
+    }
+
+    fwrite(&cadastrados, sizeof(int), 1, arquivo);
+
+    if(cadastrados > 0 && carros != NULL){
+        fwrite(carros, sizeof(Carro), cadastrados, arquivo);
+    }
+
+    fclose(arquivo);
+    printf("[OK] Dados salvos com sucesso!\n");
+}
+
+Carro* carregarCarros(int *cadastrados){
+    FILE *arquivo = fopen("carros.bin", "rb");
+    if(arquivo == NULL){
+        *cadastrados = 0;
+        return NULL;
+    }
+
+    if(fread(cadastrados, sizeof(int), 1, arquivo) != 1 || *cadastrados <= 0){
+        *cadastrados = 0;
+        fclose(arquivo);
+        return NULL;
+    }
+
+    Carro *carros = (Carro*) malloc((*cadastrados) * sizeof(Carro));
+    if (carros == NULL) {
+        printf("[ERRO] Falha ao alocar memoria para carregar os carros.\n\n");
+        *cadastrados = 0;
+        fclose(arquivo);
+        return NULL;
+    }
+
+    fread(carros, sizeof(Carro), *cadastrados, arquivo);
+
+    fclose(arquivo);
+    printf("[OK] %d carro(s) carregado(s) com sucesso!\n", *cadastrados);
+    return carros;
+}
+
+void submenuCarros(Carro **carros, int *cadastrados) {
     int opcao;
 
     do {
@@ -375,34 +443,24 @@ void submenuCarros(Carro carros[], int *cadastrados) {
 
         switch(opcao) {
             case 1:
-                if(*cadastrados >= MAX_CAR) {
-                    printf("Limite atingido\n");
-                    break;
-                }
-
-                if(cadastrarCarro(carros, *cadastrados)) {
-                    (*cadastrados)++;
-                }
+                cadastrarCarro(carros, cadastrados);
                 break;
 
             case 2:
-                listarCarros(carros, *cadastrados);
+                listarCarros(*carros, *cadastrados);
                 break;
 
-            case 3: {
-                consultarCarro(carros, *cadastrados);
+            case 3:
+                consultarCarro(*carros, *cadastrados);
                 break;
-            }
 
-            case 4: {
-                alterarCarro(carros, *cadastrados);
+            case 4:
+                alterarCarro(*carros, *cadastrados);
                 break;
-            }
 
-            case 5: {
+            case 5:
                 excluirCarroPlaca(carros, cadastrados);
                 break;
-            }
 
             case 6:
                 printf("Voltando...\n");
@@ -413,4 +471,21 @@ void submenuCarros(Carro carros[], int *cadastrados) {
         }
 
     } while(opcao != 6);
+}
+
+int main(){
+    int cadastrados = 0;
+    
+    Carro *carros = carregarCarros(&cadastrados);
+
+    submenuCarros(&carros, &cadastrados);
+
+    salvarCarros(carros, cadastrados);
+
+    if (carros != NULL) {
+        free(carros);
+        carros = NULL;
+    }
+
+    return 0;
 }

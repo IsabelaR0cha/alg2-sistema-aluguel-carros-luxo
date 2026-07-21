@@ -14,20 +14,23 @@
 // Inclui a definicao da estrutura Carro e a constante MAX_CAR.
 #include "modelos.h"
 
-Carro* buscarCarroPorPlaca(Carro *carros, int cadastrados, char *placa);
-
 int validarPlaca(char *placa);
-int cadastrarCarro(Carro *carros, int cadastrados);
 int validarMarca(char *marca);
 int validarModelo(char *modelo);
 int validarCor(char *cor);
 
-void pedirPlaca(char *placa);
-void exibirDadosCarro(Carro *carro);
+int cadastrarCarro(Carro **carros, int *cadastrados);
 void consultarCarro(Carro *carros, int cadastrados);
 void listarCarros(Carro *carros, int cadastrados);
 void alterarCarro(Carro *carros, int cadastrados);
-void excluirCarroPlaca(Carro *carros, int *cadastrados);
-void submenuCarros(Carro carros[], int *cadastrados);
+void excluirCarroPlaca(Carro **carros, int *cadastrados);
+
+void pedirPlaca(char *placa);
+void exibirDadosCarro(Carro *carro);
+Carro* buscarCarroPorPlaca(Carro *carros, int cadastrados, char *placa);
+void submenuCarros(Carro **carros, int *cadastrados);
+
+void salvarCarros(Carro *carros, int cadastrados);
+Carro* carregarCarros(int *cadastrados);
 
 #endif
