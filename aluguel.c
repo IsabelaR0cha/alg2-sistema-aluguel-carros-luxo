@@ -72,8 +72,7 @@ int aumentarVetorAlugueis(Aluguel **alugueis, int qtdAlugueis){
 
     Aluguel *novo;
 
-    novo = realloc(*alugueis,
-                   (qtdAlugueis + 1) * sizeof(Aluguel));
+    novo = realloc(*alugueis, (qtdAlugueis + 1) * sizeof(Aluguel));
 
     if(novo == NULL){
 
@@ -83,6 +82,58 @@ int aumentarVetorAlugueis(Aluguel **alugueis, int qtdAlugueis){
 
     *alugueis = novo;
 
+    return 1;
+}
+int salvarAlugueis(Aluguel *alugueis, int qtdAlugueis){
+
+    FILE *arq = fopen("alugueis.bin", "wb");
+
+    if(arq == NULL){
+        printf("Erro ao abrir o arquivo.\n");
+        return 0;
+    }
+
+    fwrite(&qtdAlugueis, sizeof(int), 1, arq);
+
+    fwrite(alugueis,
+           sizeof(Aluguel),
+           qtdAlugueis,
+           arq);
+
+    fclose(arq);
+    return 1;
+}
+int carregarAlugueis(Aluguel **alugueis, int *qtdAlugueis){
+
+    FILE *arq = fopen("alugueis.bin", "rb");
+
+    if(arq == NULL){
+        *alugueis = NULL;
+        *qtdAlugueis = 0;
+        return 0;
+    }
+
+    fread(qtdAlugueis, sizeof(int), 1, arq);
+
+    if(*qtdAlugueis > 0){
+
+        *alugueis = malloc((*qtdAlugueis) * sizeof(Aluguel));
+
+        if(*alugueis == NULL){
+            fclose(arq);
+            return;
+        }
+
+        fread(*alugueis,
+              sizeof(Aluguel),
+              *qtdAlugueis,
+              arq);
+    }
+    else{
+        *alugueis = NULL;
+    }
+
+    fclose(arq);
     return 1;
 }
     
@@ -106,7 +157,7 @@ int cadastrarAluguel(Aluguel **alugueis, int *qtdAlugueis, Cliente *clientes, in
             printf("Codigo ja cadastrado!\n");
         }
 
-    } while(codigoExiste(*alugueis, *qtdAlugueis, codigo));
+ } while(codigoExiste(*alugueis, *qtdAlugueis, codigo));
 
     (*alugueis)[pos].codigo_aluguel = codigo;
     getchar();
@@ -152,6 +203,23 @@ int cadastrarAluguel(Aluguel **alugueis, int *qtdAlugueis, Cliente *clientes, in
             validarPlaca = 1;
         }
     }
+    //Procura o carro correspondente a placa informada.
+    int indiceCarro = -1;
+
+    for(int i = 0; i < qtdCarros; i++){
+
+    if(strcmp(carros[i].placa, (*alugueis)[pos].placa) == 0){
+
+        indiceCarro = i;
+        break;
+    }
+}
+
+    if(indiceCarro == -1){
+
+    printf("Carro nao encontrado.\n");
+    return 0;
+}
 
     getchar();
 
@@ -168,19 +236,24 @@ int cadastrarAluguel(Aluguel **alugueis, int *qtdAlugueis, Cliente *clientes, in
 
     if((*alugueis)[pos].dias <= 0){
     printf("Quantidade de dias invalida!\n");
-    }
+   }
+
      }while((*alugueis)[pos].dias <= 0);
 
-    printf("Valor total: ");
-    scanf("%lf", &(*alugueis)[pos].valor_total);
+     //Faz a multiplicação automatica do valor do aluguel;
+     (*alugueis)[pos].valor_total = (*alugueis)[pos].dias * carros[indiceCarro].valor;
 
+    printf("Valor total: R$ %.2lf\n ", (*alugueis)[pos].valor_total);
+    
     (*qtdAlugueis)++;
+
+    salvarAlugueis(*alugueis, *qtdAlugueis);
 
     printf("Aluguel cadastrado com sucesso!\n");
     return 1;
 }
 
-//*a função lista todos alugueis que ja foram adicionados, mostrando todos os dados. 
+//a função lista todos alugueis que ja foram adicionados, mostrando todos os dados. 
 void listarAlugueis(Aluguel *alugueis, int qtdAlugueis) {
     if(qtdAlugueis == 0){
         printf("Nenhum aluguel cadastrado.");
@@ -200,7 +273,7 @@ void listarAlugueis(Aluguel *alugueis, int qtdAlugueis) {
 
 /*esta é a função para alterar o aluguel caso necessário, como por exemplo 
 algum erro de digitação cometido em algum dos campos.*/
-void alterarAluguel(Aluguel *alugueis, int qtdAlugueis) {
+int alterarAluguel(Aluguel *alugueis, int qtdAlugueis) {
     int id;
     int encontrado = 0;
 
@@ -228,10 +301,13 @@ void alterarAluguel(Aluguel *alugueis, int qtdAlugueis) {
     }
     if(!encontrado){
         printf("Aluguel nao encontrado.\n");
+        return 0;
     }
+    salvarAlugueis(alugueis, qtdAlugueis);
+    return 1;
 }
 
-void excluirAluguel(Aluguel **alugueis, int *qtdAlugueis) {
+int excluirAluguel(Aluguel **alugueis, int *qtdAlugueis) {
     int id;
     int encontrado = 0;
 
@@ -253,9 +329,11 @@ void excluirAluguel(Aluguel **alugueis, int *qtdAlugueis) {
     }
     if (!encontrado) {
         printf("Aluguel nao encontrado.\n");
+        return 0;
     }
+    salvarAlugueis(*alugueis, *qtdAlugueis);
+    return 1;
 }
-//Quando adicionarem a variavel alugado, liberar esta função!!
 //Sempre que um aluguel for criado ou removido esta função atualiza a variável alugado.
 /*void atualizarAlugadoCliente(Cliente *clientes, int qtdClientes, const Aluguel *alugueis, int qtdAlugueis, const char *cpf){
 
@@ -277,9 +355,8 @@ void excluirAluguel(Aluguel **alugueis, int *qtdAlugueis) {
         }
     }
 }*/
-//Quando adicionarem a variavel alugado, liberar esta função!!
 //Atualiza a situação de um carro qualquer sempre que ele é alugado ou quando ele fica livre para aluguel
-/*
+
 void atualizarAlugadoCarro(Carro *carros, int qtdCarros, const Aluguel *alugueis, int qtdAlugueis, const char *placa){
 
     int possui = existeAluguelPorPlaca(alugueis,
@@ -301,11 +378,13 @@ void atualizarAlugadoCarro(Carro *carros, int qtdCarros, const Aluguel *alugueis
         }
     }
 }
-*/
-void menuAluguel(Aluguel alugueis[], int *qtdAlugueis) {
+
+void menuAluguel(Aluguel **alugueis, int *qtdAlugueis, Cliente *clientes, int qtdClientes, Carro *carros, int qtdCarros)
+{
     int opcao;
 
-    do {
+    do{
+
         printf("\n--- MENU ALUGUEL ---\n");
         printf("1 - Cadastrar aluguel\n");
         printf("2 - Listar alugueis\n");
@@ -314,34 +393,55 @@ void menuAluguel(Aluguel alugueis[], int *qtdAlugueis) {
         printf("5 - Buscar aluguel\n");
         printf("0 - Voltar ao menu principal\n");
         printf("Opcao: ");
-        scanf("%d", &opcao);
+        scanf("%d",&opcao);
 
-        switch(opcao) {
+        switch(opcao){
+
             case 1:
-                cadastrarAluguel(alugueis, *qtdAlugueis);
+                cadastrarAluguel(alugueis,
+                                 qtdAlugueis,
+                                 clientes,
+                                 qtdClientes,
+                                 carros,
+                                 qtdCarros);
                 break;
             case 2:
-                listarAlugueis(alugueis, *qtdAlugueis);
+                listarAlugueis(*alugueis,
+                               *qtdAlugueis);
                 break;
             case 3:
-                alterarAluguel(alugueis, *qtdAlugueis);
+                alterarAluguel(*alugueis,
+                               *qtdAlugueis);
                 break;
             case 4:
-                excluirAluguel(alugueis, qtdAlugueis);
+                excluirAluguel(alugueis,
+                               qtdAlugueis);
                 break;
             case 5:
-                buscarAluguelporcodigo(alugueis, *qtdAlugueis);
+                buscarAluguelporcodigo(*alugueis,
+                                       *qtdAlugueis);
                 break;
             case 0:
                 break;
-            default: 
-                printf("[ERRO] Opcao invalida!\n");
+
+            default:
+                printf("ERRO Opcao invalida!\n");
         }
 
-    } while(opcao != 0);
+    }while(opcao != 0);
 }
 
-
-void submenuAlugueis(Aluguel **alugueis, int *qtdAlugueis) {
-    menuAluguel(alugueis, qtdAlugueis);
+void submenuAlugueis(Aluguel **alugueis,
+                     int *qtdAlugueis,
+                     Cliente *clientes,
+                     int qtdClientes,
+                     Carro *carros,
+                     int qtdCarros)
+{
+    menuAluguel(alugueis,
+                qtdAlugueis,
+                clientes,
+                qtdClientes,
+                carros,
+                qtdCarros);
 }
