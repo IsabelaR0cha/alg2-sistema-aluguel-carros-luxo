@@ -1,48 +1,66 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 
 #include "cliente.h"
 #include "util.h"
 
+// 1. Funções de Busca (adaptadas para usar 'qtd' e retornar o índice correto)
 int buscarPorCpf(Cliente *vetor, int qtd, char *cpfBusca) {
-    // Fail-fast: ignoramos clientes com ativo == 0, pois representam
-    // registros "excluídos" (soft delete) e não devem ser encontrados.
-    for(int i = 0; i < MAX_CLIENTES; i++)
-        if(vetor[i].ativo == 1 && strcmp(vetor[i].cpf, cpfBusca) == 0) {
+    for(int i = 0; i < qtd; i++)
+        if(strcmp(vetor[i].cpf, cpfBusca) == 0) {
             return i;
         }
     return -1;
 }
 
+int buscarPorNome(Cliente *vetor, int qtd, char *nomeBusca) {
+    for(int i = 0; i < qtd; i++) {
+        if(strstr(vetor[i].nome, nomeBusca) != NULL) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+int buscarPorCnh(Cliente *vetor, int qtd, char *cnhBusca) {
+    for(int i = 0; i < qtd; i++) {
+        if(strcmp(vetor[i].cnh, cnhBusca) == 0) {
+            return i;
+        }
+    }
+    return -1;
+}
+
 int buscarPorEmail(Cliente *vetor, int qtd, char *emailBusca) {
-    for(int i = 0; i < MAX_CLIENTES; i++)
-        if(vetor[i].ativo == 1 && strcmp(vetor[i].email, emailBusca) == 0) {
+    for(int i = 0; i < qtd; i++)
+        if(strcmp(vetor[i].email, emailBusca) == 0) {
             return i;
         }
     return -1;
 }
 
 int buscarPorTelefone(Cliente *vetor, int qtd, char *telefoneBusca) {
-    for(int i = 0; i < MAX_CLIENTES; i++)
-        if(vetor[i].ativo == 1 && strcmp(vetor[i].telefone, telefoneBusca) == 0) {
+    for(int i = 0; i < qtd; i++)
+        if(strcmp(vetor[i].telefone, telefoneBusca) == 0) {
             return i;
         }
     return -1;
 }
 
+// 2. Validações padrão mantidas e blindadas
 int validarDDD(char *telefone) {
     // Lista fixa com todos os DDDs oficiais brasileiros.
     const char *dddsValidos[] = {
         "11", "12", "13", "14", "15", "16", "17", "18", "19",
-        "21", "22", "24", "27", "28",
-        "31", "32", "33", "34", "35", "37", "38",
-        "41", "42", "43", "44", "45", "46", "47", "48", "49",
-        "51", "53", "54", "55",
-        "61", "62", "63", "64", "65", "66", "67", "68", "69",
-        "71", "73", "74", "75", "77", "79",
-        "81", "82", "83", "84", "85", "86", "87", "88", "89",
-        "91", "92", "93", "94", "95", "96", "97", "98", "99"
+        "21", "22", "24", "27", "28", "31", "32", "33", "34", 
+        "35", "37", "38", "41", "42", "43", "44", "45", "46", 
+        "47", "48", "49", "51", "53", "54", "55", "61", "62", 
+        "63", "64", "65", "66", "67", "68", "69", "71", "73", 
+        "74", "75", "77", "79", "81", "82", "83", "84", "85", 
+        "86", "87", "88", "89", "91", "92", "93", "94", "95", 
+        "96", "97", "98", "99"
     };
 
     char ddd[3];
@@ -87,7 +105,7 @@ int validarCnhCarro(char *cnh) {
 }
 
 int ehCpfValido(char *cpf) {
-    // Fail-fast: testa o tamanho antes de percorrer caractere a caractere,
+    // Testa o tamanho antes de percorrer caractere a caractere,
     // evitando trabalho desnecessário caso o CPF já esteja claramente errado.
     if(strlen(cpf) != 11) {
         return 0;
@@ -151,23 +169,29 @@ int validarNome(char *nome) {
     return 1;
 }
 
-void cadastrarCliente(Cliente *vetor, int *qtd) {
-    int pos = -1;
+// 3. Cadastrar Cliente com Alocação Dinâmica e Realocação via realloc
+void cadastrarCliente(Cliente **vetor, int *qtd, int *capacidade) {
 
-    // Procura a primeira posição livre (ativo == 0) no vetor para reutilizar
-    // o espaço de um cliente excluído anteriormente, em vez de exigir que
-    // o vetor cresça — já que seu tamanho é fixo (MAX_CLIENTES).
-    for(int i = 0; i < MAX_CLIENTES; i++) {
-        if(vetor[i].ativo == 0) {
-            pos = i;
-            break;
+    // Verifica se o vetor atingiu sua capacidade máxima.
+    // Caso tenha atingido, aumenta a capacidade em mais 5 posições
+    // utilizando realloc para realocar o bloco de memória.
+    if (*qtd >= *capacidade) {
+        *capacidade += 5; // Expande a capacidade em blocos de 5 clientes
+
+        Cliente *temp = realloc(*vetor, (*capacidade) * sizeof(Cliente));
+
+        // Verifica se a realocação foi realizada com sucesso.
+        if (temp == NULL) {
+            printf("\n[ERRO] Falha ao realocar memoria!\n");
+            return;
         }
+
+        // Atualiza o ponteiro do vetor para o novo endereço de memória.
+        *vetor = temp;
     }
 
-    if(pos == -1) {
-        printf("\n[ERRO] Limite de clientes atingido!\n");
-        return;
-    }
+    // A próxima posição livre para inserção é a quantidade atual de clientes.
+    int pos = *qtd;
 
     char cpfTemp[15];
     printf("\nCPF (apenas 11 numeros): ");
@@ -175,14 +199,14 @@ void cadastrarCliente(Cliente *vetor, int *qtd) {
     fgets(cpfTemp, 15, stdin);
     limparTexto(cpfTemp);
 
-    // Fail-fast: valida o formato do CPF antes de verificar duplicidade,
+    // Valida o formato do CPF antes de verificar duplicidade,
     // pois não há motivo para buscar no vetor um CPF que já é inválido.
     if(!ehCpfValido(cpfTemp)) {
         printf("\n[ERRO] CPF invalido! Digite apenas 11 numeros.\n");
         return;
     }
 
-    if(buscarPorCpf(vetor, *qtd, cpfTemp) != -1) {
+    if(buscarPorCpf(*vetor, *qtd, cpfTemp) != -1) {
         printf("\n[ERRO] CPF duplicado!\n");
         return;
     }
@@ -233,7 +257,7 @@ void cadastrarCliente(Cliente *vetor, int *qtd) {
         return;
     }
 
-    if(buscarPorTelefone(vetor, *qtd, telefoneTemp) != -1) {
+    if(buscarPorTelefone(*vetor, *qtd, telefoneTemp) != -1) {
         printf("\n[ERRO] Telefone duplicado!\n");
         return;
     }
@@ -248,7 +272,7 @@ void cadastrarCliente(Cliente *vetor, int *qtd) {
         return;
     }
 
-    if(buscarPorEmail(vetor, *qtd, emailTemp) != -1) {
+    if(buscarPorEmail(*vetor, *qtd, emailTemp) != -1) {
         printf("\n[ERRO] E-mail duplicado!\n");
         return;
     }
@@ -273,51 +297,89 @@ void cadastrarCliente(Cliente *vetor, int *qtd) {
         return;
     }
 
-    strcpy(vetor[pos].cpf, cpfTemp);
-    vetor[pos].idade = idadeTemp;
-    strcpy(vetor[pos].cnh, cnhTemp);
-    strcpy(vetor[pos].telefone, telefoneTemp);
-    strcpy(vetor[pos].email, emailTemp);
-    strcpy(vetor[pos].nome, nomeTemp);
-    strcpy(vetor[pos].cep, cepTemp);
-    vetor[pos].ativo = 1;
+    strcpy((*vetor)[pos].cpf, cpfTemp);
+    (*vetor)[pos].idade = idadeTemp;
+    strcpy((*vetor)[pos].cnh, cnhTemp);
+    strcpy((*vetor)[pos].telefone, telefoneTemp);
+    strcpy((*vetor)[pos].email, emailTemp);
+    strcpy((*vetor)[pos].nome, nomeTemp);
+    strcpy((*vetor)[pos].cep, cepTemp);
+    (*vetor)[pos].ativo = 1;
+    (*vetor)[pos].alugado = 1; // 1 = Livre por padrão para exclusão futura
     (*qtd)++;
 
     printf("\n[OK] Cliente cadastrado com sucesso!\n");
 }
 
+// 4. Listar Clientes perfeitamente baseado na quantidade real 'qtd'
 void listarClientes(Cliente *vetor, int qtd) {
-    int total = 0;
-
-    for(int i = 0; i < MAX_CLIENTES; i++) {
-        if(vetor[i].ativo == 1) {
-            printf("\nNome: %s\nCPF: %s\nIdade: %d\nCNH: %s\nTelefone: %s\nEmail: %s\nCEP: %s\n",
-                   vetor[i].nome, vetor[i].cpf, vetor[i].idade, vetor[i].cnh, vetor[i].telefone, vetor[i].email, vetor[i].cep);
-            total++;
-        }
-    }
-    if(total == 0) {
+    if(qtd == 0) {
         printf("\nNenhum cliente cadastrado.\n");
+        return;
+    }
+
+    for(int i = 0; i < qtd; i++) {
+        printf("\n--- Cliente %d ---\n", i + 1);
+        
+        printf("Nome: %s\nCPF: %s\nIdade: %d\nCNH: %s\nTelefone: %s\nEmail: %s\nCEP: %s\nStatus Aluguel: %s\n",
+               vetor[i].nome, vetor[i].cpf, vetor[i].idade, vetor[i].cnh, 
+               vetor[i].telefone, vetor[i].email, vetor[i].cep,
+               vetor[i].alugado == 0 ? "Alugado (Bloqueado)" : "Livre");
     }
 }
 
+// 5. Consultar Cliente com suporte a CPF, Nome e CNH
 void consultarCliente(Cliente *vetor, int qtd) {
-    char cpfBusca[15];
-    printf("\nCPF para buscar: ");
-    limparBuffer();
-    fgets(cpfBusca, 15, stdin);
-    limparTexto(cpfBusca);
+    if(qtd == 0) {
+        printf("\nNenhum cliente cadastrado para consultar.\n");
+        return;
+    }
 
-    int pos = buscarPorCpf(vetor, qtd, cpfBusca);
+    int opcao;
+    
+    printf("\nConsultar por:\n1. CPF\n2. Nome\n3. CNH\nEscolha: ");
+    scanf("%d", &opcao);
+    limparBuffer();
+
+    int pos = -1;
+
+    if(opcao == 1) {
+        char cpfBusca[15];
+        printf("\nCPF para buscar: ");
+        fgets(cpfBusca, 15, stdin);
+        limparTexto(cpfBusca);
+        pos = buscarPorCpf(vetor, qtd, cpfBusca);
+    } 
+    else if(opcao == 2) {
+        char nomeBusca[100];
+        printf("\nNome para buscar: ");
+        fgets(nomeBusca, 100, stdin);
+        limparTexto(nomeBusca);
+        pos = buscarPorNome(vetor, qtd, nomeBusca);
+    } 
+    else if(opcao == 3) {
+        char cnhBusca[20];
+        printf("\nCNH para buscar: ");
+        fgets(cnhBusca, 20, stdin);
+        limparTexto(cnhBusca);
+        pos = buscarPorCnh(vetor, qtd, cnhBusca);
+    } 
+    else {
+        printf("\n[ERRO] Opcao invalida!\n");
+        return;
+    }
+
     if(pos == -1) {
-        printf("\n[ERRO] Nao encontrado!\n");
+        printf("\n[ERRO] Cliente nao encontrado!\n");
     } else {
-        printf("\n[OK] Encontrado!\nNome: %s\nCPF: %s\nEmail: %s\n", vetor[pos].nome, vetor[pos].cpf, vetor[pos].email);
+        printf("\n[OK] Encontrado!\nNome: %s\nCPF: %s\nCNH: %s\nEmail: %s\nTelefone: %s\n", 
+               vetor[pos].nome, vetor[pos].cpf, vetor[pos].cnh, vetor[pos].email, vetor[pos].telefone);
     }
 }
 
+// 6. Alterar Cliente (menu de edição por campo sem alterar o CPF)
 void alterarCliente(Cliente *vetor, int qtd) {
-    char cpfBusca[15], novoCpf[15], novoTelefone[20], novoEmail[100], novaCnh[20], novoNome[100], novoCep[10];
+    char cpfBusca[15], novoTelefone[20], novoEmail[100], novaCnh[20], novoNome[100], novoCep[10];
     int novaIdade;
 
     printf("\nCPF para alterar: ");
@@ -332,31 +394,10 @@ void alterarCliente(Cliente *vetor, int qtd) {
     }
 
     int opcaoAlterar = 0;
-    printf("\nO que deseja alterar?\n1. CPF\n2. Nome\n3. Idade\n4. CNH\n5. Telefone\n6. Email\n7. CEP\nEscolha: ");
+    printf("\nO que deseja alterar?\n1. Nome\n2. Idade\n3. CNH\n4. Telefone\n5. Email\n6. CEP\nEscolha: ");
     scanf("%d", &opcaoAlterar);
 
     if(opcaoAlterar == 1) {
-        printf("Novo CPF: ");
-        limparBuffer();
-        fgets(novoCpf, 15, stdin);
-        limparTexto(novoCpf);
-
-        if(!ehCpfValido(novoCpf)) {
-            printf("\n[ERRO] CPF invalido!\n");
-            return;
-        }
-
-        // Verifica duplicidade somente depois de confirmar que o formato
-        // do novo CPF é válido (fail-fast), evitando busca desnecessária.
-        if(buscarPorCpf(vetor, qtd, novoCpf) != -1) {
-            printf("\n[ERRO] CPF ja cadastrado!\n");
-            return;
-        }
-
-        strcpy(vetor[pos].cpf, novoCpf);
-        printf("\n[OK] CPF atualizado!\n");
-
-    } else if(opcaoAlterar == 2) {
         printf("Novo Nome: ");
         limparBuffer();
         fgets(novoNome, 100, stdin);
@@ -370,15 +411,12 @@ void alterarCliente(Cliente *vetor, int qtd) {
         strcpy(vetor[pos].nome, novoNome);
         printf("\n[OK] Nome atualizado!\n");
 
-    } else if(opcaoAlterar == 3) {
+    } else if(opcaoAlterar == 2) {
         printf("Nova Idade: ");
         limparBuffer();
         scanf("%d", &novaIdade);
         limparBuffer();
 
-        // Reaproveita a mesma regra usada no cadastro (validarIdade),
-        // em vez de repetir a comparação "novaIdade < 18" isoladamente,
-        // para manter uma única fonte de verdade sobre o que é válido.
         if(!validarIdade(novaIdade)) {
             printf("\n[ERRO] Idade invalida!\n");
             return;
@@ -387,7 +425,7 @@ void alterarCliente(Cliente *vetor, int qtd) {
         vetor[pos].idade = novaIdade;
         printf("\n[OK] Idade atualizada!\n");
 
-    } else if(opcaoAlterar == 4) {
+    } else if(opcaoAlterar == 3) {
         printf("Nova CNH: ");
         limparBuffer();
         fgets(novaCnh, 20, stdin);
@@ -401,7 +439,7 @@ void alterarCliente(Cliente *vetor, int qtd) {
         strcpy(vetor[pos].cnh, novaCnh);
         printf("\n[OK] CNH atualizada!\n");
 
-    } else if(opcaoAlterar == 5) {
+    } else if(opcaoAlterar == 4) {
         printf("Novo Telefone: ");
         limparBuffer();
         fgets(novoTelefone, 20, stdin);
@@ -430,14 +468,12 @@ void alterarCliente(Cliente *vetor, int qtd) {
         strcpy(vetor[pos].telefone, novoTelefone);
         printf("\n[OK] Telefone atualizado!\n");
 
-    } else if(opcaoAlterar == 6) {
+    } else if(opcaoAlterar == 5) {
         printf("Novo Email: ");
         limparBuffer();
         fgets(novoEmail, 100, stdin);
         limparTexto(novoEmail);
 
-        // Mesma validação de formato aplicada no cadastro original,
-        // garantindo que a alteração não relaxe uma regra já existente.
         if(!validarEmail(novoEmail)) {
             printf("\n[ERRO] Email invalido!\n");
             return;
@@ -451,7 +487,7 @@ void alterarCliente(Cliente *vetor, int qtd) {
         strcpy(vetor[pos].email, novoEmail);
         printf("\n[OK] Email atualizado!\n");
 
-    } else if(opcaoAlterar == 7) {
+    } else if(opcaoAlterar == 6) {
         printf("Novo CEP: ");
         limparBuffer();
         fgets(novoCep, 10, stdin);
@@ -470,30 +506,44 @@ void alterarCliente(Cliente *vetor, int qtd) {
     }
 }
 
-void excluirCliente(Cliente *vetor, int *qtd) {
+// 7. Exclusão com compactação real (Shift) e validação do campo alugado
+void excluirCliente(Cliente **vetor, int *qtd, int *capacidade) {
     char cpfBusca[15];
-    printf("\nCPF para excluir: ");
+    printf("\nCPF do cliente para excluir: ");
     limparBuffer();
     fgets(cpfBusca, 15, stdin);
     limparTexto(cpfBusca);
 
-    int pos = buscarPorCpf(vetor, *qtd, cpfBusca);
+    int pos = buscarPorCpf(*vetor, *qtd, cpfBusca);
     if(pos == -1) {
-        printf("\n[ERRO] Nao encontrado!\n");
+        printf("\n[ERRO] Cliente nao encontrado!\n");
         return;
     }
 
-    // Soft delete: apenas desativamos o registro em vez de deslocar todos
-    // os elementos seguintes do vetor para "tapar o buraco". Isso é O(1)
-    // em vez de O(n), e a posição liberada será reaproveitada no próximo
-    // cadastro (ver busca por 'ativo == 0' em cadastrarCliente).
-    vetor[pos].ativo = 0;
+    if((*vetor)[pos].alugado == 0) {
+        printf("\n[BLOQUEIO] Cliente possui aluguel ativo (alugado == 0). Nao e permitido exclui-lo!\n");
+        return;
+    }
+
+    // Compactação (Shift para a esquerda)
+    for(int i = pos; i < *qtd - 1; i++) {
+        (*vetor)[i] = (*vetor)[i + 1];
+    }
     (*qtd)--;
 
-    printf("\n[OK] Removido com sucesso!\n");
+    // Redução de memória opcional via realloc
+    if (*capacidade > 5 && *qtd <= *capacidade - 5) {
+        *capacidade -= 5;
+        Cliente *temp = realloc(*vetor, (*capacidade) * sizeof(Cliente));
+        if (temp != NULL) {
+            *vetor = temp;
+        }
+    }
+
+    printf("\n[OK] Cliente excluido com sucesso e vetor compactado!\n");
 }
 
-void submenuClientes(Cliente *vetor, int *qtd) {
+void submenuClientes(Cliente **vetor, int *qtd, int *capacidade) {
     int opcao = 0;
     while(opcao != 6) {
         printf("\n--- PAINEL DE CLIENTES ---\n");
@@ -507,15 +557,15 @@ void submenuClientes(Cliente *vetor, int *qtd) {
         scanf("%d", &opcao);
 
         if(opcao == 1) {
-            cadastrarCliente(vetor, qtd);
+            cadastrarCliente(vetor, qtd, capacidade);
         } else if(opcao == 2) {
-            listarClientes(vetor, *qtd);
+            listarClientes(*vetor, *qtd);
         } else if(opcao == 3) {
-            consultarCliente(vetor, *qtd);
+            consultarCliente(*vetor, *qtd);
         } else if(opcao == 4) {
-            alterarCliente(vetor, *qtd);
+            alterarCliente(*vetor, *qtd);
         } else if(opcao == 5) {
-            excluirCliente(vetor, qtd);
+            excluirCliente(vetor, qtd, capacidade);
         } else if(opcao == 6) {
             printf("Voltando...\n");
             return;
