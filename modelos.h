@@ -1,0 +1,51 @@
+/*
+ * Arquivo: modelos.h
+ * Finalidade: reunir as constantes e as estruturas de dados compartilhadas
+ * por todos os módulos do sistema de locacao de carros.
+ *
+ * Este arquivo nao implementa funcoes. Ele apenas define os tipos Cliente,
+ * Carro e Aluguel para serem utilizados nos demais arquivos do projeto.
+ */
+
+// Protege o header contra inclusoes repetidas durante a compilacao.
+#ifndef MODELOS_H
+#define MODELOS_H
+
+#define MAX_CAR 5
+
+#define Maximocadastros 5
+
+// Máximo de clientes que podem ser cadastrados.
+// Usado tanto para dimensionar a alocação dinâmica em main() quanto como
+// Limite de iteração em todas as funções que percorrem o vetor de clientes.
+#define MAX_CLIENTES 5
+
+typedef struct {
+    char nome[100], 
+    cnh[20], 
+    cpf[15], 
+    telefone[20], 
+    email[100], 
+    cep[10];
+    int idade, ativo;
+} Cliente;
+
+typedef struct {
+    char marca[50];
+    char modelo[50];
+    char cor[20];
+    char placa[8];
+    float km, valor;
+    int alugado;
+} Carro;
+
+typedef struct {
+    int codigo_aluguel;
+    char cpf_cliente[15];
+    char placa[8];
+    int dias;
+    double valor_total;
+} Aluguel;
+
+// Encerra a protecao iniciada pelo #ifndef.
+#endif
