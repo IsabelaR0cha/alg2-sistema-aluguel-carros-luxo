@@ -84,7 +84,7 @@ int aumentarVetorAlugueis(Aluguel **alugueis, int qtdAlugueis){
 
     return 1;
 }
-int salvarAlugueis(Aluguel *alugueis, int qtdAlugueis){
+int salvarAlugueis(const Aluguel *alugueis, int qtdAlugueis){
 
     FILE *arq = fopen("alugueis.bin", "wb");
 
@@ -121,7 +121,7 @@ int carregarAlugueis(Aluguel **alugueis, int *qtdAlugueis){
 
         if(*alugueis == NULL){
             fclose(arq);
-            return;
+            return 0;
         }
 
         fread(*alugueis,
@@ -254,7 +254,7 @@ int cadastrarAluguel(Aluguel **alugueis, int *qtdAlugueis, Cliente *clientes, in
 }
 
 //a função lista todos alugueis que ja foram adicionados, mostrando todos os dados. 
-void listarAlugueis(Aluguel *alugueis, int qtdAlugueis) {
+void listarAlugueis(const Aluguel *alugueis, int qtdAlugueis) {
     if(qtdAlugueis == 0){
         printf("Nenhum aluguel cadastrado.");
         return;

@@ -484,20 +484,3 @@ void submenuCarros(Carro **carros, int *cadastrados) {
 
     } while(opcao != 6);
 }
-
-int main(){
-    int cadastrados = 0;
-    
-    Carro *carros = carregarCarros(&cadastrados);
-
-    submenuCarros(&carros, &cadastrados);
-
-    salvarCarros(carros, cadastrados);
-
-    if (carros != NULL) {
-        free(carros);
-        carros = NULL;
-    }
-
-    return 0;
-}
