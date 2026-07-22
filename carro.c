@@ -29,6 +29,8 @@ int validarPlaca(char *placa) {
 }
 
 int validarMarca(char *marca){
+    //recebe uma string, padroniza para minusculo e faz uma comparação item a item com o vetor constante de marcas pré definidas;
+    //se a string for equivalente a alguma das marcas retorna 1 se não retona 0.
     stringParaMinusculo(marca);
     const char *marcas_validas[] = {
         "porsche", "ferrari", "lamborghini", "bmw", 
@@ -45,7 +47,7 @@ int validarMarca(char *marca){
 }
 
 int validarModelo(char *modelo){
-    //Recebe uma string e verifica se possui mais de dois caracteres,  
+    //Recebe uma string a padroniza em minusculo e verifica se possui mais de dois caracteres,  
     //se possui ao menos uma letra e se não é constituida apenas por espaços.
     //Se for valida retorna 1 se não retorna 0.
     stringParaMinusculo(modelo);
@@ -69,6 +71,9 @@ int validarModelo(char *modelo){
 }
 
 int validarCor(char *cor){
+    //Recebe uma string a padroniza em minusculo e verifica se possui mais de três caracteres,  
+    //se possui apenas letras e se não é constituida apenas por espaços.
+    //Se for valida retorna 1 se não retorna 0.
     stringParaMinusculo(cor);
     if(strlen(cor) < 3){
         return 0;
@@ -91,12 +96,16 @@ int validarCor(char *cor){
 
 
 void pedirPlaca(char *placa){
+    //recebe uma string e a preeche com uma entrada de usuario;
+    //limita a escrita de 7 caracteres;
+    //Como %7s deixa o \n no buffer, é importante fazer a limpeza.
     printf("\nDigite a placa no formato (ABC1D23): ");
     scanf("%7s", placa);
-    limparBuffer();//O %7s deixa o \n no buffer, por isso é importante fazer a limpeza
+    limparBuffer();
 }
 
 void exibirDadosCarro(Carro *carro){
+    //Recebe os dados de um carro e imprime.
     printf("\nPlaca: %s\n", carro->placa);
     printf("Modelo: %s %s, %s\n", carro->marca, carro->modelo, carro->cor);
     printf("Quilometragem: %.2f\n", carro->km);
@@ -117,7 +126,8 @@ Carro* buscarCarroPorPlaca(Carro *carros, int cadastrados, char *placa){
 
 
 int cadastrarCarro(Carro **carros, int *cadastrados) {
-    // Recebe o vetor de carros e o total de cadastros para registrar um novo veículo.
+    // Recebe um ponteiro para um vetor de carros e outro ponteiro para o total de cadastros;
+    //
     // Valida a placa, marca, modelo, cor, quilometragem e aluguel, forçando redigitação em caso de erro.
     // Retorna 1 para sucesso ou 0 se a placa já existir no sistema.
     Carro *temp = (Carro*) realloc(*carros, (*cadastrados + 1) * sizeof(Carro));
@@ -313,6 +323,7 @@ void alterarCarro(Carro *carros, int cadastrados) {
                     limparBuffer();
                     encontrado->km = -1; 
                 }
+                limparBuffer();
             } while (encontrado->km < 0);
             printf("[OK] Quilometragem atualizada com sucesso!\n");
             break;
@@ -325,6 +336,7 @@ void alterarCarro(Carro *carros, int cadastrados) {
                     limparBuffer();
                     encontrado->valor = -1;
                 }
+                limparBuffer();
             } while (encontrado->valor <= 0);
             printf("[OK] Valor do aluguel atualizado com sucesso!\n");
             break;
