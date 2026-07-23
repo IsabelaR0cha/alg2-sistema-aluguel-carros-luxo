@@ -27,6 +27,7 @@ typedef struct {
     telefone[20], 
     email[100], 
     cep[10];
+    int alugado;
     int idade, ativo;
 } Cliente;
 
