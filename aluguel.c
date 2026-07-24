@@ -7,7 +7,8 @@
 #include "aluguel.h"
 #include "carro.h"
 
-//*Verifica se o funcionario não esta usando um código repetido para cadastrar o aluguel.
+// Verifica se o codigo digitado pelo funcionario ja esta em uso por outro aluguel.
+// Retorna 1 se ja existe (codigo repetido) e 0 se pode usar.
 int codigoExiste(Aluguel *alugueis, int qtdAlugueis, int codigo) {
     for(int i = 0; i < qtdAlugueis; i++) {
         if(alugueis[i].codigo_aluguel == codigo) {
@@ -17,7 +18,9 @@ int codigoExiste(Aluguel *alugueis, int qtdAlugueis, int codigo) {
 
     return 0;
 }
-//Verifica se o cpf que esta sendo usado ja possui algum aluguel ligado a ele
+
+// Verifica se o CPF informado ja possui algum aluguel em aberto vinculado a ele.
+// Usada para nao deixar o mesmo cliente com mais de um aluguel ao mesmo tempo.
 int existeAluguelPorCpf(const Aluguel *alugueis, int qtdAlugueis, const char *cpf){
 
     for(int i = 0; i < qtdAlugueis; i++){
@@ -28,7 +31,9 @@ int existeAluguelPorCpf(const Aluguel *alugueis, int qtdAlugueis, const char *cp
     }
     return 0;
 }
-//Verifica se um carro espeficio ja esta alugado através de sua placa
+
+// Verifica se um carro (pela placa) ja esta alugado no momento.
+// Evita que o mesmo carro seja alugado para dois clientes diferentes.
 int existeAluguelPorPlaca(const Aluguel *alugueis, int qtdAlugueis, const char *placa){
 
     for(int i = 0; i < qtdAlugueis; i++){
@@ -40,8 +45,9 @@ int existeAluguelPorPlaca(const Aluguel *alugueis, int qtdAlugueis, const char *
 
     return 0;
 }
-/*Além de possuir a listagem de todos alugueis, nessa função podemos procurar um aluguel especifico através do código
-o que acaba facilitando na hora para o funcionário.*/
+
+// Busca um aluguel especifico pelo codigo e mostra todos os dados dele na tela.
+// Alem de listar, facilita a consulta rapida de um aluguel unico.
 void buscarAluguelporcodigo(Aluguel *alugueis, int qtdAlugueis) {
     int codigo;
     int encontrado = 0;
@@ -69,7 +75,8 @@ void buscarAluguelporcodigo(Aluguel *alugueis, int qtdAlugueis) {
     }
 }
 
-//essa função substitui o vetor fixo Maximocadastros.
+// Aumenta em 1 posicao o vetor dinamico de alugueis usando realloc.
+// Isso substitui a ideia de um vetor de tamanho fixo, deixando o cadastro sem limite maximo.
 int aumentarVetorAlugueis(Aluguel **alugueis, int qtdAlugueis){
 
     Aluguel *novo;
@@ -86,6 +93,9 @@ int aumentarVetorAlugueis(Aluguel **alugueis, int qtdAlugueis){
 
     return 1;
 }
+
+// Salva todo o vetor de alugueis no arquivo binario "alugueis.bin".
+// Retorna 0 se der erro ao abrir o arquivo e 1 se salvar com sucesso.
 int salvarAlugueis(Aluguel *alugueis, int qtdAlugueis){
 
     FILE *arq = fopen("alugueis.bin", "wb");
@@ -103,6 +113,9 @@ int salvarAlugueis(Aluguel *alugueis, int qtdAlugueis){
 
     return 1;
 }
+
+// Le o arquivo "alugueis.bin" e carrega os alugueis salvos para dentro do programa.
+// Calcula quantos registros existem a partir do tamanho do arquivo e aloca a memoria certa para eles.
 int carregarAlugueis(Aluguel **alugueis, int *qtdAlugueis){
 
     FILE *arq = fopen("alugueis.bin", "rb");
@@ -148,7 +161,9 @@ int carregarAlugueis(Aluguel **alugueis, int *qtdAlugueis){
     }
     return 1;
 }
-    
+
+// Cadastra um novo aluguel: pede codigo, placa do carro, CPF do cliente e quantidade de dias,
+// calcula o valor total (dias x diaria do carro) e marca o carro como alugado.
 int cadastrarAluguel(Aluguel **alugueis, int *qtdAlugueis, Cliente *clientes, int qtdClientes, Carro *carros, int qtdCarros) {
     if (!aumentarVetorAlugueis(alugueis, *qtdAlugueis)) {
         return 0;
@@ -181,11 +196,17 @@ int cadastrarAluguel(Aluguel **alugueis, int *qtdAlugueis, Cliente *clientes, in
             continue;
         }
 
-        // Busca o carro no array passado pelo menu
+        // Busca o carro no array passado pelo menus
+        indiceCarro = buscarCarroPorPlaca(carros, qtdCarros, placa);
+ 
+        if (indiceCarro == NULL) {
+            printf("[ERRO] Carro nao encontrado!\n\n");
+            continue;
+        }
 
         if (indiceCarro->alugado) {
             printf("[ERRO] Este carro ja esta alugado no momento!\n\n");
-            return 0;
+            continue;
         }
 
     } while (!validarPlaca(placa));
@@ -221,7 +242,7 @@ int cadastrarAluguel(Aluguel **alugueis, int *qtdAlugueis, Cliente *clientes, in
     return 1;
 }
 
-//a função lista todos alugueis que ja foram adicionados, mostrando todos os dados. 
+// Lista todos os alugueis ja cadastrados, mostrando codigo, placa, CPF, dias e valor total de cada um.
 void listarAlugueis(const Aluguel *alugueis, int qtdAlugueis) {
     if(qtdAlugueis == 0){
         printf("Nenhum aluguel cadastrado.");
@@ -239,8 +260,8 @@ void listarAlugueis(const Aluguel *alugueis, int qtdAlugueis) {
     }
 }
 
-/*esta é a função para alterar o aluguel caso necessário, como por exemplo 
-algum erro de digitação cometido em algum dos campos.*/
+// Altera os dados de um aluguel ja existente (CPF, codigo e dias), buscando-o pelo codigo antigo.
+// Recalcula o valor total apos a alteracao, com base na diaria do carro correspondente.
 int alterarAluguel(Aluguel *alugueis, int qtdAlugueis, Carro *carros, int qtdCarros) {
     int id;
     int encontrado = 0;
@@ -284,6 +305,8 @@ int alterarAluguel(Aluguel *alugueis, int qtdAlugueis, Carro *carros, int qtdCar
     return 1;
 }
 
+// Exclui um aluguel pelo codigo, deslocando os registros seguintes uma posicao para tras
+// (ja que nao existe delete direto em vetor) e diminuindo a quantidade de alugueis.
 int excluirAluguel(Aluguel **alugueis, int *qtdAlugueis) {
     int id;
     int encontrado = 0;
@@ -311,7 +334,9 @@ int excluirAluguel(Aluguel **alugueis, int *qtdAlugueis) {
     salvarAlugueis(*alugueis, *qtdAlugueis);
     return 1;
 }
-//Sempre que um aluguel for criado ou removido esta função atualiza a variável alugado.
+
+// Atualiza o campo "alugado" do cliente sempre que um aluguel dele e criado ou removido.
+// Confere se o CPF ainda possui algum aluguel ativo e marca 1 (alugado) ou 0 (livre).
 void atualizarAlugadoCliente(Cliente *clientes, int qtdClientes, const Aluguel *alugueis, int qtdAlugueis, const char *cpf){
 
     int possui = existeAluguelPorCpf(alugueis,
@@ -332,8 +357,9 @@ void atualizarAlugadoCliente(Cliente *clientes, int qtdClientes, const Aluguel *
         }
     }
 }
-//Atualiza a situação de um carro qualquer sempre que ele é alugado ou quando ele fica livre para aluguel
 
+// Atualiza o campo "alugado" do carro (pela placa) sempre que ele e alugado ou devolvido.
+// Funciona igual a funcao acima, mas voltada para o carro em vez do cliente.
 void atualizarAlugadoCarro(Carro *carros, int qtdCarros, const Aluguel *alugueis, int qtdAlugueis, const char *placa){
 
     int possui = existeAluguelPorPlaca(alugueis,
@@ -356,6 +382,8 @@ void atualizarAlugadoCarro(Carro *carros, int qtdCarros, const Aluguel *alugueis
     }
 }
 
+// Menu principal do modulo de aluguel: mostra as opcoes (cadastrar, listar, alterar,
+// excluir, buscar) e chama a funcao correspondente conforme a escolha do usuario.
 void menuAluguel(Aluguel **alugueis, int *qtdAlugueis, Cliente *clientes, int qtdClientes, Carro *carros, int qtdCarros)
 {
     int opcao;
@@ -407,6 +435,8 @@ void menuAluguel(Aluguel **alugueis, int *qtdAlugueis, Cliente *clientes, int qt
     }while(opcao != 0);
 }
 
+// Apenas repassa a chamada para menuAluguel. Serve como ponto de entrada do submenu
+// para ser chamado a partir do menu principal do sistema.
 void submenuAlugueis(Aluguel **alugueis,
                      int *qtdAlugueis,
                      Cliente *clientes,
