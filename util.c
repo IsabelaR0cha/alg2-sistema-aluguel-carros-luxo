@@ -2,6 +2,8 @@
 #include <string.h>
 #include <ctype.h>
 
+#include "util.h"
+
 /*
  * limparTexto
  * Remove o caractere de nova linha ('\n') deixado no final de uma string

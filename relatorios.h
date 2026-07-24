@@ -1,6 +1,17 @@
+/*
+ * Arquivo: relatorios.h
+ * Finalidade: declarar as funcoes utilizadas na geracao de relatorios.
+ *
+ * Este arquivo apresenta o menu de relatorios e as funcoes responsáveis
+ * por gerar consultas de alugueis por CPF, placa e valor total minimo.
+ * As implementacoes dessas funcoes encontram-se no arquivo relatorios.c.
+ */
+
+ // Protege o header contra inclusoes repetidas durante a compilacao.
 #ifndef RELATORIOS_H
 #define RELATORIOS_H
 
+// Inclui as definicoes das estruturas Cliente, Carro e Aluguel.
 #include "modelos.h"
 
 // 1. Menu principal dos relatorios
