@@ -11,24 +11,16 @@
 #ifndef MODELOS_H
 #define MODELOS_H
 
-#define MAX_CAR 5
-
-#define Maximocadastros 5
-
-// Máximo de clientes que podem ser cadastrados.
-// Usado tanto para dimensionar a alocação dinâmica em main() quanto como
-// Limite de iteração em todas as funções que percorrem o vetor de clientes.
-#define MAX_CLIENTES 5
-
 typedef struct {
-    char nome[100], 
-    cnh[20], 
-    cpf[15], 
-    telefone[20], 
-    email[100], 
-    cep[10];
+    char nome[100];
+    char cnh[20];
+    char cpf[15];
+    char telefone[20]; 
+    char email[100];
+    char cep[10];
     int alugado;
-    int idade, ativo;
+    int idade;
+    int ativo;
 } Cliente;
 
 typedef struct {

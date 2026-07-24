@@ -1,16 +1,19 @@
 /*
  * Arquivo: cliente.h
- * Finalidade: declarar as funções utilizadas no gerenciamento de clientes.
- * Implementações em: cliente.c
+ * Finalidade: declarar as funcoes utilizadas no gerenciamento de clientes.
+ *
+ * Este arquivo apresenta as funcoes de busca, validacao e CRUD de clientes.
+ * As implementacoes dessas funcoes encontram-se no arquivo cliente.c.
  */
 
-// Protege contra inclusões repetidas durante a compilação
+// Protege o header contra inclusoes repetidas durante a compilacao.
 #ifndef CLIENTE_H
 #define CLIENTE_H
 
+// Inclui a definicao da estrutura Cliente.
 #include "modelos.h"
 
-// Funções de Busca
+// Funções de Busca (atualizadas para contemplar CPF, Nome, CNH, Email e Telefone)
 int buscarPorCpf(Cliente *vetor, int qtd, char *cpfBusca);
 int buscarPorNome(Cliente *vetor, int qtd, char *nomeBusca);
 int buscarPorCnh(Cliente *vetor, int qtd, char *cnhBusca);
