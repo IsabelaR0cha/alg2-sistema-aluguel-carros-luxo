@@ -194,107 +194,127 @@ void cadastrarCliente(Cliente **vetor, int *qtd, int *capacidade) {
     int pos = *qtd;
 
     char cpfTemp[15];
-    printf("\nCPF (apenas 11 numeros): ");
-    limparBuffer();
-    fgets(cpfTemp, 15, stdin);
-    limparTexto(cpfTemp);
 
-    // Valida o formato do CPF antes de verificar duplicidade,
-    // pois não há motivo para buscar no vetor um CPF que já é inválido.
-    if(!ehCpfValido(cpfTemp)) {
-        printf("\n[ERRO] CPF invalido! Digite apenas 11 numeros.\n");
-        return;
-    }
+    while(1){
+            printf("\nCPF (apenas 11 numeros no formato XXXXXXXXXXX): ");
+            fgets(cpfTemp, 15, stdin);
+            limparTexto(cpfTemp);
 
-    if(buscarPorCpf(*vetor, *qtd, cpfTemp) != -1) {
-        printf("\n[ERRO] CPF duplicado!\n");
-        return;
-    }
+            // Valida o formato do CPF antes de verificar duplicidade,
+            // pois não há motivo para buscar no vetor um CPF que já é inválido.
+            if(!ehCpfValido(cpfTemp)) {
+                printf("\n[ERRO] CPF invalido! Digite apenas 11 numeros.\n");
+            }else if(buscarPorCpf(*vetor, *qtd, cpfTemp) != -1){
+                printf("\n[ERRO] CPF duplicado! Tente novamente.\n");
+            }else{
+                break;
+            }
+        }
 
     int idadeTemp;
-    printf("Idade: ");
-    scanf("%d", &idadeTemp);
 
-    if(!validarIdade(idadeTemp)) {
-        printf("\n[ERRO] Idade invalida!\n");
-        return;
+    while(1){
+        printf("Idade: ");
+        scanf("%d", &idadeTemp);
+        limparBuffer();
+
+        if(!validarIdade(idadeTemp)) {
+            printf("\n[ERRO] Idade invalida! Tente novamente.\n");
+        }else{
+            break;
+    }
     }
 
     char cnhTemp[20];
-    printf("CNH: ");
-    // Limpa o '\n' deixado pelo scanf("%d", ...) anterior antes de usar
-    // fgets(), evitando que ele leia uma linha vazia (ver limparBuffer()).
-    limparBuffer();
-    fgets(cnhTemp, 20, stdin);
-    limparTexto(cnhTemp);
 
-    if(!validarCnhCarro(cnhTemp)) {
-        printf("\n[ERRO] CNH nao compativel com carro!\n");
-        return;
+    while(1){
+        printf("CNH (Ex: B, BA, BC, ...): ");
+        // Limpa o '\n' deixado pelo scanf("%d", ...) anterior antes de usar
+        // fgets(), evitando que ele leia uma linha vazia
+        fgets(cnhTemp, 20, stdin);
+        limparTexto(cnhTemp);
+
+        if(!validarCnhCarro(cnhTemp)) {
+            printf("\n[ERRO] CNH nao compativel com carro! Tente novamente.\n");
+        }else{
+            break;
+        }
     }
 
     char telefoneTemp[20];
-    printf("Telefone: ");
-    fgets(telefoneTemp, 20, stdin);
-    limparTexto(telefoneTemp);
+    while(1){
 
-    // Todo celular brasileiro tem '9' como terceiro
-    // caractere (posição 2), logo após o DDD de 2 dígitos. Verificamos
-    // o tamanho mínimo antes de acessar o índice 2, para não ler memória
-    // fora dos limites caso o usuário digite um telefone muito curto.
-    if(strlen(telefoneTemp) < 3 || telefoneTemp[2] != '9') {
-        printf("\n[ERRO] Telefone invalido! O numero deve iniciar com 9 apos o DDD.\n");
-        return;
-    }
+        printf("Telefone (Formato DDD9XXXXXXXX): ");
+        fgets(telefoneTemp, 20, stdin);
+        limparTexto(telefoneTemp);
 
-    if(!validarTelefoneTamanho(telefoneTemp)) {
+        // Todo celular brasileiro tem '9' como terceiro
+        // caractere (posição 2), logo após o DDD de 2 dígitos. Verificamos
+        // o tamanho mínimo antes de acessar o índice 2, para não ler memória
+        // fora dos limites caso o usuário digite um telefone muito curto.
+        if(strlen(telefoneTemp) < 3 || telefoneTemp[2] != '9') {
+            printf("\n[ERRO] Telefone invalido! O numero deve iniciar com 9 apos o DDD. Tente novamente.\n");
+        }
+
+        else if(!validarTelefoneTamanho(telefoneTemp)) {
         printf("\n[ERRO] Telefone deve possuir 11 numeros.\n");
-        return;
-    }
+        }
 
-    if(!validarDDD(telefoneTemp)) {
+        else if(!validarDDD(telefoneTemp)) {
         printf("\n[ERRO] DDD invalido!\n");
-        return;
-    }
+        }
 
-    if(buscarPorTelefone(*vetor, *qtd, telefoneTemp) != -1) {
+        else if(buscarPorTelefone(*vetor, *qtd, telefoneTemp) != -1) {
         printf("\n[ERRO] Telefone duplicado!\n");
-        return;
+        }else{
+            break;
+        }
     }
 
     char emailTemp[100];
-    printf("Email: ");
-    fgets(emailTemp, 100, stdin);
-    limparTexto(emailTemp);
 
-    if(!validarEmail(emailTemp)) {
-        printf("\n[ERRO] Email invalido!\n");
-        return;
-    }
+    while(1){
+        printf("Email: ");
+        fgets(emailTemp, 100, stdin);
+        limparTexto(emailTemp);
 
-    if(buscarPorEmail(*vetor, *qtd, emailTemp) != -1) {
-        printf("\n[ERRO] E-mail duplicado!\n");
-        return;
+        if(!validarEmail(emailTemp)) {
+            printf("\n[ERRO] Email invalido!\n");
+        }
+
+        else if(buscarPorEmail(*vetor, *qtd, emailTemp) != -1) {
+            printf("\n[ERRO] E-mail duplicado!\n");
+        }else{
+            break;
+        }
     }
 
     char nomeTemp[100];
-    printf("Nome: ");
-    fgets(nomeTemp, 100, stdin);
-    limparTexto(nomeTemp);
 
-    if(!validarNome(nomeTemp)) {
+    while(1){
+        printf("Nome: ");
+        fgets(nomeTemp, 100, stdin);
+        limparTexto(nomeTemp);
+
+        if(!validarNome(nomeTemp)) {
         printf("\n[ERRO] Nome invalido!\n");
-        return;
+        }else{
+            break;
+        }
     }
 
     char cepTemp[10];
-    printf("CEP: ");
-    fgets(cepTemp, 10, stdin);
-    limparTexto(cepTemp);
 
-    if(!validarCEP(cepTemp)) {
-        printf("\n[ERRO] CEP invalido!\n");
-        return;
+    while(1){
+        printf("CEP (formato: XXXXXXXX): ");
+        fgets(cepTemp, 10, stdin);
+        limparTexto(cepTemp);
+
+        if(!validarCEP(cepTemp)) {
+            printf("\n[ERRO] CEP invalido!\n");
+        }else{
+            break;
+        }
     }
 
     strcpy((*vetor)[pos].cpf, cpfTemp);
