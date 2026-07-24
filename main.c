@@ -1,4 +1,4 @@
-/* Sistema Integrado de Locadora de Carros de Luxo - Arquivo principal */
+/* Sistema Integrado de Locadora de Carros - Arquivo principal */
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -7,7 +7,10 @@
 #include "carro.h"
 #include "aluguel.h"
 
-void menuPrincipal( 
+// menuPrincipal: inicializa os dados e roda o loop do menu principal
+// Recebe: vetorClientes (ponteiro duplo), qtd e capacidade de clientes,
+//         carros, cadastrados, alugueis e qtdAlugueis | Retorna: void
+void menuPrincipal(
     Cliente **vetorClientes,
     int *qtdClientes,
     int *capacidadeClientes,
@@ -16,14 +19,9 @@ void menuPrincipal(
     Aluguel alugueis[],
     int *qtdAlugueis
 ) {
-    // Inicialização defensiva: malloc() não zera a memória alocada, então
-    // os campos 'ativo' começariam com valor indeterminado (lixo de
-    // memória) se não fossem explicitamente zerados aqui.
-    // (Nota: Como migramos para exclusão física com compactação, os campos 
-    // são controlados dinamicamente via qtd, mas mantemos o laço seguro por compatibilidade).
-    for(int i = 0; i < *capacidadeClientes; i++) {
+    // malloc não zera a memória — inicializa 'ativo' de cada posição para evitar lixo
+    for(int i = 0; i < *capacidadeClientes; i++)
         (*vetorClientes)[i].ativo = 0;
-    }
 
     int opcao = 0;
 
@@ -36,31 +34,27 @@ void menuPrincipal(
         printf("Escolha uma opcao: ");
         scanf("%d", &opcao);
 
-        if(opcao == 1) {
-            // Passamos &qtdClientes (endereço da variável) porque
-            // submenuClientes() e, por consequência, cadastrarCliente()/
-            // excluirCliente() precisam alterar o valor real de
-            // qtdClientes, e não apenas uma cópia local.
-            // Também repassamos &capacidadeClientes para gerenciar o realloc dinamicamente.
+        if(opcao == 1)
+            // Passa ponteiro duplo e capacidade pois cadastrar/excluir podem realocar o vetor
             submenuClientes(vetorClientes, qtdClientes, capacidadeClientes);
-        } else if(opcao == 2) {
+        else if(opcao == 2)
             submenuCarros(carros, cadastrados);
-        } else if(opcao == 3) {
-            submenuAlugueis(&alugueis, qtdAlugueis, *vetorClientes, *qtdClientes, carros, *cadastrados);;
-        } else if(opcao == 4) {
+        else if(opcao == 3)
+            submenuAlugueis(&alugueis, qtdAlugueis, *vetorClientes, *qtdClientes, carros, *cadastrados);
+        else if(opcao == 4)
             printf("Encerrando o sistema de locacao...\n");
-            return;
-        } else {
+        else
             printf("\n[ERRO] Opcao invalida! Tente novamente.\n");
-        }
     }
 }
 
+// main: aloca o vetor de clientes, carrega os dados salvos, roda o menu e libera a memória
+// Recebe: nada | Retorna: 0 sucesso, 1 falha de alocação
 int main() {
     int capacidadeClientes = MAX_CLIENTES;
     int qtdClientes = 0;
 
-    // Alocação dinâmica inicial do vetor de clientes usando malloc
+    // Alocação dinâmica inicial: reserva espaço para MAX_CLIENTES clientes na heap
     Cliente *vetorClientes = malloc(sizeof(Cliente) * capacidadeClientes);
     if(vetorClientes == NULL) {
         printf("[ERRO] Falha ao alocar memoria inicial para os clientes!\n");
@@ -73,11 +67,15 @@ int main() {
     Aluguel alugueis[Maximocadastros];
     int qtdAlugueis = 0;
 
-    // Chamada do menu principal passando os ponteiros de controle necessários para o realloc
+    // Restaura os clientes do arquivo binário antes de abrir o menu
+    carregarClientesArquivo(&vetorClientes, &qtdClientes, &capacidadeClientes);
+
     menuPrincipal(&vetorClientes, &qtdClientes, &capacidadeClientes, carros, &cadastrados, alugueis, &qtdAlugueis);
 
-    // Liberação da memória alocada dinamicamente ao sair do sistema
-    free(vetorClientes);
+    // Persiste os dados no arquivo antes de encerrar
+    salvarClientesArquivo(vetorClientes, qtdClientes);
+
+    free(vetorClientes); // libera a memória alocada com malloc/realloc
 
     return 0;
 }
