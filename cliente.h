@@ -31,13 +31,13 @@ int validarTelefoneTamanho(char *telefone);
 int validarNome(char *nome);
 
 // Funções de CRUD (vetor e capacidade por ponteiro para suportar realloc)
-void cadastrarCliente(Cliente **vetor, int *qtd, int *capacidade);
+void cadastrarCliente(Cliente **vetor, int *qtd);
 void listarClientes(Cliente *vetor, int qtd);
 void consultarCliente(Cliente *vetor, int qtd);
 void alterarCliente(Cliente *vetor, int qtd);
-void excluirCliente(Cliente **vetor, int *qtd, int *capacidade);
-void submenuClientes(Cliente **vetor, int *qtd, int *capacidade);
+void excluirCliente(Cliente **vetor, int *qtd);
+void submenuClientes(Cliente **vetor, int *qtd);
 void salvarClientesArquivo(Cliente *vetor, int qtd);
-void carregarClientesArquivo(Cliente **vetor, int *qtd, int *capacidade);
+void carregarClientesArquivo(Cliente **vetor, int *qtd);
 
 #endif
