@@ -34,9 +34,57 @@ int existeAluguelPorPlaca(
     const char *placa
 );
 
-void buscarAluguelporcodigo(
+void exibirAluguelCompleto(
+    const Aluguel *aluguel,
+    Cliente *clientes,
+    int qtdClientes,
+    Carro *carros,
+    int qtdCarros
+);
+
+void consultarAluguelPorCodigo(
     Aluguel *alugueis,
-    int qtdAlugueis
+    int qtdAlugueis,
+    Cliente *clientes,
+    int qtdClientes,
+    Carro *carros,
+    int qtdCarros
+);
+
+void consultarAlugueisPorCpf(
+    Aluguel *alugueis,
+    int qtdAlugueis,
+    Cliente *clientes,
+    int qtdClientes,
+    Carro *carros,
+    int qtdCarros
+);
+
+void consultarAlugueisPorPlaca(
+    Aluguel *alugueis,
+    int qtdAlugueis,
+    Cliente *clientes,
+    int qtdClientes,
+    Carro *carros,
+    int qtdCarros
+);
+
+void consultarAlugueisPorValorMinimo(
+    Aluguel *alugueis,
+    int qtdAlugueis,
+    Cliente *clientes,
+    int qtdClientes,
+    Carro *carros,
+    int qtdCarros
+);
+
+void consultarAlugueis(
+    Aluguel *alugueis,
+    int qtdAlugueis,
+    Cliente *clientes,
+    int qtdClientes,
+    Carro *carros,
+    int qtdCarros
 );
 
 // Funções de Alocação Dinâmica

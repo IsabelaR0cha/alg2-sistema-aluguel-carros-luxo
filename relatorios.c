@@ -62,25 +62,64 @@ void menuRelatorios(Cliente *clientes, int qtdClientes, Carro *carros, int qtdCa
 }
 
 // 2. Relatorio de alugueis por CPF do cliente
-void relatorioPorCPF(Cliente *clientes, int qtdClientes, Carro *carros, int qtdCarros, Aluguel *alugueis, int qtdAlugueis)
+void relatorioPorCPF(
+    Cliente *clientes,
+    int qtdClientes,
+    Carro *carros,
+    int qtdCarros,
+    Aluguel *alugueis,
+    int qtdAlugueis
+)
 {
-
     char cpfBusca[16];
+    char nomeArquivo[100];
     int encontrado = 0;
 
-    printf("Digite o CPF para o relatorio (ex: 12345678901): ");
+    printf("Digite o CPF para o relatorio "
+           "(apenas 11 numeros no formato XXXXXXXXXXX): ");
+
     fgets(cpfBusca, sizeof(cpfBusca), stdin);
     limparTexto(cpfBusca);
 
-    FILE *f = fopen("relatorio_alugueis.txt", "w");
-    if (f == NULL)
+    printf("Digite o nome do arquivo para salvar "
+           "(ex: relatorio_cpf_joao.txt): ");
+
+    fgets(nomeArquivo, sizeof(nomeArquivo), stdin);
+    limparTexto(nomeArquivo);
+
+    if (strlen(nomeArquivo) == 0)
     {
-        printf("Erro ao criar arquivo de relatorio!\n");
+        printf("[ERRO] O nome do arquivo nao pode ficar vazio!\n");
+        return;
+    }
+    
+    FILE *teste = fopen(nomeArquivo, "r");
+
+    if (teste != NULL) {
+        fclose(teste); 
+        printf("[ERRO] Ja existe um arquivo com o nome '%s'. Operacao cancelada.\n", nomeArquivo);
+        return; 
+    }
+
+    FILE *f = fopen(nomeArquivo, "w");
+    if (f == NULL) {
+        printf(
+            "[ERRO] Nao foi possivel criar o arquivo '%s'.\n",
+            nomeArquivo
+        );
         return;
     }
 
-    fprintf(f, "RELATORIO DE ALUGUEIS - FILTRO POR CPF: %s\n", cpfBusca);
-    fprintf(f, "========================================================\n");
+    fprintf(
+        f,
+        "RELATORIO DE ALUGUEIS - FILTRO POR CPF: %s\n",
+        cpfBusca
+    );
+
+    fprintf(
+        f,
+        "========================================================\n"
+    );
 
     for (int i = 0; i < qtdAlugueis; i++)
     {
@@ -88,9 +127,14 @@ void relatorioPorCPF(Cliente *clientes, int qtdClientes, Carro *carros, int qtdC
         {
             encontrado = 1;
 
-            // BUSCA DO NOME
-            int posicao = buscarPorCpf(clientes, qtdClientes, alugueis[i].cpf_cliente);
+            int posicao = buscarPorCpf(
+                clientes,
+                qtdClientes,
+                alugueis[i].cpf_cliente
+            );
+
             char *nomeDoCliente;
+
             if (posicao != -1)
             {
                 nomeDoCliente = clientes[posicao].nome;
@@ -100,9 +144,14 @@ void relatorioPorCPF(Cliente *clientes, int qtdClientes, Carro *carros, int qtdC
                 nomeDoCliente = "Cliente nao encontrado";
             }
 
-            // BUSCA DO CARRO
-            Carro *carroAchado = buscarCarroPorPlaca(carros, qtdCarros, alugueis[i].placa);
+            Carro *carroAchado = buscarCarroPorPlaca(
+                carros,
+                qtdCarros,
+                alugueis[i].placa
+            );
+
             char *modeloDoCarro;
+
             if (carroAchado != NULL)
             {
                 modeloDoCarro = carroAchado->modelo;
@@ -112,41 +161,103 @@ void relatorioPorCPF(Cliente *clientes, int qtdClientes, Carro *carros, int qtdC
                 modeloDoCarro = "Carro nao encontrado";
             }
 
-            // Grava os dados no arquivo
-            fprintf(f, "Codigo Aluguel: %d | Dias: %d | Total: R$ %.2f\n", alugueis[i].codigo_aluguel, alugueis[i].dias, alugueis[i].valor_total);
-            fprintf(f, "Cliente: %s | Carro: %s\n", nomeDoCliente, modeloDoCarro);
-            fprintf(f, "--------------------------------------------------------\n");
+            fprintf(
+                f,
+                "Codigo Aluguel: %d | Dias: %d | Total: R$ %.2f\n",
+                alugueis[i].codigo_aluguel,
+                alugueis[i].dias,
+                alugueis[i].valor_total
+            );
+
+            fprintf(
+                f,
+                "Cliente: %s | Carro: %s\n",
+                nomeDoCliente,
+                modeloDoCarro
+            );
+
+            fprintf(
+                f,
+                "--------------------------------------------------------\n"
+            );
         }
     }
+
     if (encontrado == 0)
     {
-        fprintf(f, "Nenhum aluguel encontrado para o CPF: %s\n", cpfBusca);
+        fprintf(
+            f,
+            "Nenhum aluguel encontrado para o CPF: %s\n",
+            cpfBusca
+        );
     }
 
     fclose(f);
-    printf("\nRelatorio por CPF gerado em 'relatorio_alugueis.txt'!\n");
+
+    printf(
+        "[OK] Relatorio por CPF gerado em '%s'!\n",
+        nomeArquivo
+    );
 }
 
 // 3. Relatorio de alugueis por Placa do carro
-void relatorioPorPlaca(Cliente *clientes, int qtdClientes, Carro *carros, int qtdCarros, Aluguel *alugueis, int qtdAlugueis)
+// 3. Relatorio de alugueis por Placa do carro
+void relatorioPorPlaca(
+    Cliente *clientes,
+    int qtdClientes,
+    Carro *carros,
+    int qtdCarros,
+    Aluguel *alugueis,
+    int qtdAlugueis
+)
 {
-
     char placaBusca[8];
+    char nomeArquivo[100];
     int encontrado = 0;
 
     printf("Digite a placa para o relatorio (ex: ABC1D23): ");
     scanf("%7s", placaBusca);
     limparBuffer();
 
-    FILE *f = fopen("relatorio_alugueis.txt", "w");
-    if (f == NULL)
+    printf("Digite o nome do arquivo para salvar "
+           "(ex: relatorio_placa_ABC1D23.txt): ");
+
+    fgets(nomeArquivo, sizeof(nomeArquivo), stdin);
+    limparTexto(nomeArquivo);
+
+    if (strlen(nomeArquivo) == 0)
     {
-        printf("Erro ao criar arquivo de relatorio!\n");
+        printf("[ERRO] O nome do arquivo nao pode ficar vazio!\n");
         return;
     }
 
-    fprintf(f, "RELATORIO DE ALUGUEIS - FILTRO POR PLACA: %s\n", placaBusca);
-    fprintf(f, "========================================================\n");
+    FILE *teste = fopen(nomeArquivo, "r");
+
+    if (teste != NULL) {
+        fclose(teste); 
+        printf("[ERRO] Ja existe um arquivo com o nome '%s'. Operacao cancelada.\n", nomeArquivo);
+        return; 
+    }
+
+    FILE *f = fopen(nomeArquivo, "w");
+    if (f == NULL) {
+        printf(
+            "[ERRO] Nao foi possivel criar o arquivo '%s'.\n",
+            nomeArquivo
+        );
+        return;
+    }
+
+    fprintf(
+        f,
+        "RELATORIO DE ALUGUEIS - FILTRO POR PLACA: %s\n",
+        placaBusca
+    );
+
+    fprintf(
+        f,
+        "========================================================\n"
+    );
 
     for (int i = 0; i < qtdAlugueis; i++)
     {
@@ -154,9 +265,14 @@ void relatorioPorPlaca(Cliente *clientes, int qtdClientes, Carro *carros, int qt
         {
             encontrado = 1;
 
-            // BUSCA DO NOME
-            int posicao = buscarPorCpf(clientes, qtdClientes, alugueis[i].cpf_cliente);
+            int posicao = buscarPorCpf(
+                clientes,
+                qtdClientes,
+                alugueis[i].cpf_cliente
+            );
+
             char *nomeDoCliente;
+
             if (posicao != -1)
             {
                 nomeDoCliente = clientes[posicao].nome;
@@ -166,9 +282,14 @@ void relatorioPorPlaca(Cliente *clientes, int qtdClientes, Carro *carros, int qt
                 nomeDoCliente = "Cliente nao encontrado";
             }
 
-            // BUSCA DO CARRO
-            Carro *carroAchado = buscarCarroPorPlaca(carros, qtdCarros, alugueis[i].placa);
+            Carro *carroAchado = buscarCarroPorPlaca(
+                carros,
+                qtdCarros,
+                alugueis[i].placa
+            );
+
             char *modeloDoCarro;
+
             if (carroAchado != NULL)
             {
                 modeloDoCarro = carroAchado->modelo;
@@ -178,42 +299,110 @@ void relatorioPorPlaca(Cliente *clientes, int qtdClientes, Carro *carros, int qt
                 modeloDoCarro = "Carro nao encontrado";
             }
 
-            // Grava os dados no arquivo
-            fprintf(f, "Codigo: %d | Carro: %s | Total: R$ %.2f\n",
-                    alugueis[i].codigo_aluguel, modeloDoCarro, alugueis[i].valor_total);
-            fprintf(f, "Cliente: %s | Dias: %d\n", nomeDoCliente, alugueis[i].dias);
-            fprintf(f, "--------------------------------------------------------\n");
+            fprintf(
+                f,
+                "Codigo: %d | Carro: %s | Total: R$ %.2f\n",
+                alugueis[i].codigo_aluguel,
+                modeloDoCarro,
+                alugueis[i].valor_total
+            );
+
+            fprintf(
+                f,
+                "Cliente: %s | Dias: %d\n",
+                nomeDoCliente,
+                alugueis[i].dias
+            );
+
+            fprintf(
+                f,
+                "--------------------------------------------------------\n"
+            );
         }
     }
+
     if (encontrado == 0)
     {
-        fprintf(f, "Nenhum aluguel registrado para a placa: %s\n", placaBusca);
+        fprintf(
+            f,
+            "Nenhum aluguel registrado para a placa: %s\n",
+            placaBusca
+        );
     }
 
     fclose(f);
-    printf("Relatorio por placa gerado com sucesso em 'relatorio_alugueis.txt'!\n");
+
+    printf(
+        "[OK] Relatorio por placa gerado em '%s'!\n",
+        nomeArquivo
+    );
 }
 
 // 4. Relatorio por Valor Total Minimo
-void relatorioPorValorMinimo(Cliente *clientes, int qtdClientes, Carro *carros, int qtdCarros, Aluguel *alugueis, int qtdAlugueis)
+// 4. Relatorio por Valor Total Minimo
+void relatorioPorValorMinimo(
+    Cliente *clientes,
+    int qtdClientes,
+    Carro *carros,
+    int qtdCarros,
+    Aluguel *alugueis,
+    int qtdAlugueis
+)
 {
-
     float valorCorte;
+    char nomeArquivo[100];
     int encontrado = 0;
 
     printf("Exibir alugueis com valor total maior ou igual a R$: ");
-    scanf("%f", &valorCorte);
-    limparBuffer();
 
-    FILE *f = fopen("relatorio_alugueis.txt", "w");
-    if (f == NULL)
+    if (scanf("%f", &valorCorte) != 1)
     {
-        printf("Erro ao criar arquivo!\n");
+        limparBuffer();
+        printf("[ERRO] Digite um valor numerico valido!\n");
         return;
     }
 
-    fprintf(f, "RELATORIO - ALUGUEIS ACIMA DE R$ %.2f\n", valorCorte);
-    fprintf(f, "========================================================\n");
+    limparBuffer();
+
+    printf("Digite o nome do arquivo para salvar "
+           "(ex: relatorio_valor_500.txt): ");
+
+    fgets(nomeArquivo, sizeof(nomeArquivo), stdin);
+    limparTexto(nomeArquivo);
+
+    if (strlen(nomeArquivo) == 0)
+    {
+        printf("[ERRO] O nome do arquivo nao pode ficar vazio!\n");
+        return;
+    }
+
+    FILE *teste = fopen(nomeArquivo, "r");
+
+    if (teste != NULL) {
+        fclose(teste); 
+        printf("[ERRO] Ja existe um arquivo com o nome '%s'. Operacao cancelada.\n", nomeArquivo);
+        return; 
+    }
+
+    FILE *f = fopen(nomeArquivo, "w");
+    if (f == NULL) {
+        printf(
+            "[ERRO] Nao foi possivel criar o arquivo '%s'.\n",
+            nomeArquivo
+        );
+        return;
+    }
+
+    fprintf(
+        f,
+        "RELATORIO - ALUGUEIS ACIMA DE R$ %.2f\n",
+        valorCorte
+    );
+
+    fprintf(
+        f,
+        "========================================================\n"
+    );
 
     for (int i = 0; i < qtdAlugueis; i++)
     {
@@ -221,8 +410,12 @@ void relatorioPorValorMinimo(Cliente *clientes, int qtdClientes, Carro *carros, 
         {
             encontrado = 1;
 
-            // BUSCA DO NOME
-            int posicao = buscarPorCpf(clientes, qtdClientes, alugueis[i].cpf_cliente);
+            int posicao = buscarPorCpf(
+                clientes,
+                qtdClientes,
+                alugueis[i].cpf_cliente
+            );
+
             char *nomeDoCliente;
 
             if (posicao != -1)
@@ -234,8 +427,12 @@ void relatorioPorValorMinimo(Cliente *clientes, int qtdClientes, Carro *carros, 
                 nomeDoCliente = "Cliente nao encontrado";
             }
 
-            // BUSCA DO CARRO
-            Carro *carroAchado = buscarCarroPorPlaca(carros, qtdCarros, alugueis[i].placa);
+            Carro *carroAchado = buscarCarroPorPlaca(
+                carros,
+                qtdCarros,
+                alugueis[i].placa
+            );
+
             char *modeloDoCarro;
 
             if (carroAchado != NULL)
@@ -247,18 +444,40 @@ void relatorioPorValorMinimo(Cliente *clientes, int qtdClientes, Carro *carros, 
                 modeloDoCarro = "Carro nao encontrado";
             }
 
-            // Grava os dados no arquivo
-            fprintf(f, "Codigo: %d | Valor: R$ %.2f | Carro: %s\n",
-                    alugueis[i].codigo_aluguel, alugueis[i].valor_total, modeloDoCarro);
-            fprintf(f, "Cliente: %s\n", nomeDoCliente);
-            fprintf(f, "--------------------------------------------------------\n");
+            fprintf(
+                f,
+                "Codigo: %d | Valor: R$ %.2f | Carro: %s\n",
+                alugueis[i].codigo_aluguel,
+                alugueis[i].valor_total,
+                modeloDoCarro
+            );
+
+            fprintf(
+                f,
+                "Cliente: %s\n",
+                nomeDoCliente
+            );
+
+            fprintf(
+                f,
+                "--------------------------------------------------------\n"
+            );
         }
     }
+
     if (encontrado == 0)
     {
-        fprintf(f, "Nenhum aluguel atingiu o valor de R$ %.2f\n", valorCorte);
+        fprintf(
+            f,
+            "Nenhum aluguel atingiu o valor de R$ %.2f\n",
+            valorCorte
+        );
     }
 
     fclose(f);
-    printf("Relatorio de valores minimos gerado em 'relatorio_alugueis.txt'!\n");
+
+    printf(
+        "[OK] Relatorio por valor minimo gerado em '%s'!\n",
+        nomeArquivo
+    );
 }
