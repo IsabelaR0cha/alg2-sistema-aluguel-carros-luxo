@@ -503,7 +503,7 @@ void salvarCarros(Carro *carros, int cadastrados)
     }
 
     fclose(arquivo);
-    printf("[OK] Dados salvos com sucesso!\n");
+    printf("[OK] Dados salvos com sucesso em carros.bin!\n");
 }
 
 // 9. Carregar Carros do Arquivo Binário
@@ -535,7 +535,7 @@ Carro *carregarCarros(int *cadastrados)
     fread(carros, sizeof(Carro), *cadastrados, arquivo);
 
     fclose(arquivo);
-    printf("[OK] %d carro(s) carregado(s) com sucesso!\n", *cadastrados);
+    printf("[OK] %d carro(s) carregado(s) com sucesso de carros.bin!\n", *cadastrados);
     return carros;
 }
 

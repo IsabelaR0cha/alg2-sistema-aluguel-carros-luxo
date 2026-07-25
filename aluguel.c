@@ -53,19 +53,83 @@ int existeAluguelPorPlaca(const Aluguel *alugueis, int qtdAlugueis, const char *
     return 0;
 }
 
-// 2. Buscar Aluguel pelo Codigo
-void buscarAluguelporcodigo(Aluguel *alugueis, int qtdAlugueis)
+// 2. Exibir os Dados Completos de um Aluguel
+// Mostra os campos do aluguel e os dados do cliente e do carro relacionados.
+void exibirAluguelCompleto(
+    const Aluguel *aluguel,
+    Cliente *clientes,
+    int qtdClientes,
+    Carro *carros,
+    int qtdCarros
+)
 {
-    if (qtdAlugueis == 0 || alugueis == NULL)
+    char cpfBusca[15];
+    char placaBusca[8];
+
+    strcpy(cpfBusca, aluguel->cpf_cliente);
+    strcpy(placaBusca, aluguel->placa);
+
+    int indiceCliente = buscarPorCpf(clientes, qtdClientes, cpfBusca);
+    Carro *carroEncontrado = buscarCarroPorPlaca(
+        carros,
+        qtdCarros,
+        placaBusca
+    );
+
+    printf("\n========================================\n");
+    printf("DADOS DO ALUGUEL\n");
+    printf("========================================\n");
+    printf("Codigo: %d\n", aluguel->codigo_aluguel);
+    printf("CPF do cliente: %s\n", aluguel->cpf_cliente);
+    printf("Placa do carro: %s\n", aluguel->placa);
+    printf("Quantidade de dias: %d\n", aluguel->dias);
+    printf("Valor total: R$ %.2lf\n", aluguel->valor_total);
+
+    if (indiceCliente != -1)
     {
-        printf("[ERRO] Nenhum aluguel cadastrado!\n");
-        return;
+        printf("\nDADOS DO CLIENTE\n");
+        printf("Nome: %s\n", clientes[indiceCliente].nome);
+        printf("Idade: %d\n", clientes[indiceCliente].idade);
+        printf("CNH: %s\n", clientes[indiceCliente].cnh);
+        printf("Telefone: %s\n", clientes[indiceCliente].telefone);
+        printf("Email: %s\n", clientes[indiceCliente].email);
+        printf("CEP: %s\n", clientes[indiceCliente].cep);
+    }
+    else
+    {
+        printf("\n[AVISO] Cliente relacionado nao encontrado.\n");
     }
 
+    if (carroEncontrado != NULL)
+    {
+        printf("\nDADOS DO CARRO\n");
+        printf("Marca: %s\n", carroEncontrado->marca);
+        printf("Modelo: %s\n", carroEncontrado->modelo);
+        printf("Cor: %s\n", carroEncontrado->cor);
+        printf("Quilometragem: %.2f\n", carroEncontrado->km);
+        printf("Valor da diaria: R$ %.2f\n", carroEncontrado->valor);
+    }
+    else
+    {
+        printf("\n[AVISO] Carro relacionado nao encontrado.\n");
+    }
+
+    printf("========================================\n");
+}
+
+// 3. Consultar Aluguel pelo Codigo
+void consultarAluguelPorCodigo(
+    Aluguel *alugueis,
+    int qtdAlugueis,
+    Cliente *clientes,
+    int qtdClientes,
+    Carro *carros,
+    int qtdCarros
+)
+{
     int codigo;
     int encontrado = 0;
 
-    printf("\n--- BUSCAR ALUGUEL ---\n");
     printf("Digite o codigo do aluguel: ");
 
     if (scanf("%d", &codigo) != 1)
@@ -80,12 +144,14 @@ void buscarAluguelporcodigo(Aluguel *alugueis, int qtdAlugueis)
     {
         if (alugueis[i].codigo_aluguel == codigo)
         {
-            printf("\nAluguel encontrado:\n");
-            printf("Codigo do aluguel: %d\n", alugueis[i].codigo_aluguel);
-            printf("Placa do carro: %s\n", alugueis[i].placa);
-            printf("CPF do cliente: %s\n", alugueis[i].cpf_cliente);
-            printf("Dias alugados: %d\n", alugueis[i].dias);
-            printf("Valor total: %.2lf\n", alugueis[i].valor_total);
+            exibirAluguelCompleto(
+                &alugueis[i],
+                clientes,
+                qtdClientes,
+                carros,
+                qtdCarros
+            );
+
             encontrado = 1;
             break;
         }
@@ -97,7 +163,244 @@ void buscarAluguelporcodigo(Aluguel *alugueis, int qtdAlugueis)
     }
 }
 
-// 3. Aumentar o Vetor Dinamico de Alugueis
+// 4. Consultar todos os Alugueis de um Cliente pelo CPF
+void consultarAlugueisPorCpf(
+    Aluguel *alugueis,
+    int qtdAlugueis,
+    Cliente *clientes,
+    int qtdClientes,
+    Carro *carros,
+    int qtdCarros
+)
+{
+    char cpfBusca[15];
+    int encontrado = 0;
+
+    printf("Digite o CPF do cliente, com 11 numeros: ");
+    fgets(cpfBusca, sizeof(cpfBusca), stdin);
+    limparTexto(cpfBusca);
+
+    if (!ehCpfValido(cpfBusca))
+    {
+        printf("[ERRO] CPF invalido!\n");
+        return;
+    }
+
+    for (int i = 0; i < qtdAlugueis; i++)
+    {
+        if (strcmp(alugueis[i].cpf_cliente, cpfBusca) == 0)
+        {
+            exibirAluguelCompleto(
+                &alugueis[i],
+                clientes,
+                qtdClientes,
+                carros,
+                qtdCarros
+            );
+
+            encontrado = 1;
+        }
+    }
+
+    if (!encontrado)
+    {
+        printf("[ERRO] Nenhum aluguel encontrado para esse CPF!\n");
+    }
+}
+
+// 5. Consultar todos os Alugueis de um Carro pela Placa
+void consultarAlugueisPorPlaca(
+    Aluguel *alugueis,
+    int qtdAlugueis,
+    Cliente *clientes,
+    int qtdClientes,
+    Carro *carros,
+    int qtdCarros
+)
+{
+    char placaBusca[8];
+    int encontrado = 0;
+
+    pedirPlaca(placaBusca);
+
+    if (!validarPlaca(placaBusca))
+    {
+        printf("[ERRO] Placa invalida! Use o formato ABC1D23.\n");
+        return;
+    }
+
+    for (int i = 0; i < qtdAlugueis; i++)
+    {
+        if (strcmp(alugueis[i].placa, placaBusca) == 0)
+        {
+            exibirAluguelCompleto(
+                &alugueis[i],
+                clientes,
+                qtdClientes,
+                carros,
+                qtdCarros
+            );
+
+            encontrado = 1;
+        }
+    }
+
+    if (!encontrado)
+    {
+        printf("[ERRO] Nenhum aluguel encontrado para essa placa!\n");
+    }
+}
+
+// 6. Consultar Alugueis a partir de um Valor Total Minimo
+void consultarAlugueisPorValorMinimo(
+    Aluguel *alugueis,
+    int qtdAlugueis,
+    Cliente *clientes,
+    int qtdClientes,
+    Carro *carros,
+    int qtdCarros
+)
+{
+    double valorMinimo;
+    int encontrado = 0;
+
+    printf("Digite o valor total minimo: R$ ");
+
+    if (scanf("%lf", &valorMinimo) != 1)
+    {
+        printf("[ERRO] Digite um valor numerico valido!\n");
+        limparBuffer();
+        return;
+    }
+
+    limparBuffer();
+
+    if (valorMinimo < 0)
+    {
+        printf("[ERRO] O valor minimo nao pode ser negativo!\n");
+        return;
+    }
+
+    for (int i = 0; i < qtdAlugueis; i++)
+    {
+        if (alugueis[i].valor_total >= valorMinimo)
+        {
+            exibirAluguelCompleto(
+                &alugueis[i],
+                clientes,
+                qtdClientes,
+                carros,
+                qtdCarros
+            );
+
+            encontrado = 1;
+        }
+    }
+
+    if (!encontrado)
+    {
+        printf(
+            "[ERRO] Nenhum aluguel com valor igual ou superior a R$ %.2lf!\n",
+            valorMinimo
+        );
+    }
+}
+
+// 7. Menu de Consultas de Alugueis por Caracteristica
+void consultarAlugueis(
+    Aluguel *alugueis,
+    int qtdAlugueis,
+    Cliente *clientes,
+    int qtdClientes,
+    Carro *carros,
+    int qtdCarros
+)
+{
+    if (alugueis == NULL || qtdAlugueis == 0)
+    {
+        printf("[ERRO] Nenhum aluguel cadastrado para consultar!\n");
+        return;
+    }
+
+    int opcao = -1;
+
+    do
+    {
+        printf("\n--- CONSULTAR ALUGUEIS ---\n");
+        printf("1 - Consultar por codigo\n");
+        printf("2 - Consultar por CPF do cliente\n");
+        printf("3 - Consultar por placa do carro\n");
+        printf("4 - Consultar por valor total minimo\n");
+        printf("0 - Voltar\n");
+        printf("Opcao: ");
+
+        if (scanf("%d", &opcao) != 1)
+        {
+            printf("[ERRO] Digite apenas numeros!\n");
+            limparBuffer();
+            opcao = -1;
+            continue;
+        }
+
+        limparBuffer();
+
+        switch (opcao)
+        {
+            case 1:
+                consultarAluguelPorCodigo(
+                    alugueis,
+                    qtdAlugueis,
+                    clientes,
+                    qtdClientes,
+                    carros,
+                    qtdCarros
+                );
+                break;
+
+            case 2:
+                consultarAlugueisPorCpf(
+                    alugueis,
+                    qtdAlugueis,
+                    clientes,
+                    qtdClientes,
+                    carros,
+                    qtdCarros
+                );
+                break;
+
+            case 3:
+                consultarAlugueisPorPlaca(
+                    alugueis,
+                    qtdAlugueis,
+                    clientes,
+                    qtdClientes,
+                    carros,
+                    qtdCarros
+                );
+                break;
+
+            case 4:
+                consultarAlugueisPorValorMinimo(
+                    alugueis,
+                    qtdAlugueis,
+                    clientes,
+                    qtdClientes,
+                    carros,
+                    qtdCarros
+                );
+                break;
+
+            case 0:
+                printf("Voltando ao menu de alugueis...\n");
+                break;
+
+            default:
+                printf("[ERRO] Opcao invalida!\n");
+        }
+    } while (opcao != 0);
+}
+
+// 8. Aumentar o Vetor Dinamico de Alugueis
 // Aumenta em 1 posicao o vetor dinamico de alugueis usando realloc.
 // Isso substitui a ideia de um vetor de tamanho fixo, deixando o cadastro sem limite maximo.
 int aumentarVetorAlugueis(Aluguel **alugueis, int qtdAlugueis)
@@ -137,6 +440,7 @@ int salvarAlugueis(Aluguel *alugueis, int qtdAlugueis)
     }
 
     fclose(arq);
+    printf("[OK] Dados salvos com sucesso em alugueis.bin!\n");
     return 1;
 }
 
@@ -164,6 +468,7 @@ int carregarAlugueis(Aluguel **alugueis, int *qtdAlugueis)
 
         *alugueis = NULL;
         fclose(arq);
+        printf("[OK] 0 aluguel(is) carregado(s) de alugueis.bin!\n");
         return 1;
     }
     // Aloca exatamente a quantidade necessária
@@ -180,13 +485,18 @@ int carregarAlugueis(Aluguel **alugueis, int *qtdAlugueis)
                          arq);
     fclose(arq);
     // Aqui é para conferir se leu tudo 
-    if(lidos != *qtdAlugueis){
+    if (lidos != (size_t)*qtdAlugueis){
 
         free(*alugueis);
         *alugueis = NULL;
         *qtdAlugueis = 0;
         return 0;
     }
+
+    printf(
+        "[OK] %d aluguel(is) carregado(s) com sucesso de alugueis.bin!\n",
+        *qtdAlugueis
+    );
 
     return 1;
 }
@@ -747,7 +1057,7 @@ void menuAluguel(
         printf("2 - Listar alugueis\n");
         printf("3 - Alterar aluguel\n");
         printf("4 - Excluir aluguel\n");
-        printf("5 - Buscar aluguel\n");
+        printf("5 - Consultar alugueis\n");
         printf("0 - Voltar ao menu principal\n");
         printf("Opcao: ");
 
@@ -801,7 +1111,14 @@ void menuAluguel(
                 break;
 
             case 5:
-                buscarAluguelporcodigo(*alugueis, *qtdAlugueis);
+                consultarAlugueis(
+                    *alugueis,
+                    *qtdAlugueis,
+                    clientes,
+                    qtdClientes,
+                    carros,
+                    qtdCarros
+                );
                 break;
 
             case 0:

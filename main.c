@@ -7,6 +7,7 @@
 #include "carro.h"
 #include "aluguel.h"
 #include "relatorios.h"
+#include "util.h"
 
 /*
  * Exibe o menu principal e encaminha o usuário
@@ -35,7 +36,23 @@ void menuPrincipal(
         printf("4. Gerar Relatorios\n");
         printf("5. Sair do Sistema\n");
         printf("Escolha uma Opcao: ");
-        scanf("%d", &opcao);
+
+        if (scanf("%d", &opcao) != 1)
+        {
+            if (feof(stdin))
+            {
+                printf("\nEntrada encerrada. Encerrando o sistema de locacao...\n");
+                opcao = 5;
+                break;
+            }
+
+            limparBuffer();
+            printf("\n[ERRO] Digite apenas numeros!\n");
+            opcao = 0;
+            continue;
+        }
+
+        limparBuffer();
 
         if (opcao == 1)
         {
@@ -82,11 +99,6 @@ void menuPrincipal(
 
 int main(void)
 {
-
-    /*
-     * Inicializa os vetores dinâmicos sem memória alocada.
-     * Cada cadastro aumentará o respectivo vetor com realloc().
-     */
     Cliente *clientes = NULL;
     int qtdClientes = 0;
 
@@ -96,10 +108,31 @@ int main(void)
     Aluguel *alugueis = NULL;
     int qtdAlugueis = 0;
 
-    // Inicia o sistema e permite que os menus alterem os vetores e quantidades.
-    menuPrincipal(&clientes, &qtdClientes, &carros, &qtdCarros, &alugueis, &qtdAlugueis);
+    // Carrega os clientes salvos
+    carregarClientesArquivo(&clientes, &qtdClientes);
 
-    // Libera toda a memória dinâmica antes de encerrar o programa.
+    // Carrega os carros salvos
+    carros = carregarCarros(&qtdCarros);
+
+    // Carrega os alugueis salvos
+    carregarAlugueis(&alugueis, &qtdAlugueis);
+
+    // Inicia o sistema
+    menuPrincipal(
+        &clientes,
+        &qtdClientes,
+        &carros,
+        &qtdCarros,
+        &alugueis,
+        &qtdAlugueis
+    );
+
+    // Salva todos os registros antes de encerrar
+    salvarClientesArquivo(clientes, qtdClientes);
+    salvarCarros(carros, qtdCarros);
+    salvarAlugueis(alugueis, qtdAlugueis);
+
+    // Libera a memória dinâmica
     free(clientes);
     free(carros);
     free(alugueis);

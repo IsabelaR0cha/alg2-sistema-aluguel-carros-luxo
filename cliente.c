@@ -217,7 +217,7 @@ int validarTelefoneTamanho(char *telefone)
 // Recebe: nome | Retorna: 1 válido, 0 inválido
 int validarNome(char *nome)
 {
-    if (strlen(nome) < 5)
+    if (strlen(nome) < 2)
     {
         return 0;
     }
@@ -236,109 +236,119 @@ int validarNome(char *nome)
 // 3. Cadastrar Cliente com Alocação Dinâmica e Realocação via realloc
 void cadastrarCliente(Cliente **vetor, int *qtd)
 {
-
     char cpfTemp[15];
-    printf("\nCPF (Digite com 11 dígitos, sem pontos ou traço): ");
-    limparBuffer();
-    fgets(cpfTemp, 15, stdin);
-    limparTexto(cpfTemp);
-
-    char cpfTemp[15];
-    while(1) {
+    while (1)
+    {
         printf("\nCPF (apenas 11 numeros no formato XXXXXXXXXXX): ");
         fgets(cpfTemp, 15, stdin);
         limparTexto(cpfTemp);
 
-        if(!ehCpfValido(cpfTemp))
+        if (!ehCpfValido(cpfTemp))
             printf("\n[ERRO] CPF invalido! Digite apenas 11 numeros.\n");
-        else if(buscarPorCpf(*vetor, *qtd, cpfTemp) != -1)
+        else if (buscarPorCpf(*vetor, *qtd, cpfTemp) != -1)
             printf("\n[ERRO] CPF duplicado! Tente novamente.\n");
         else
             break;
     }
 
     int idadeTemp;
-    while(1) {
+    while (1)
+    {
         printf("Idade: ");
         scanf("%d", &idadeTemp);
         limparBuffer(); // limpa o '\n' após cada tentativa, válida ou não
 
-        if(!validarIdade(idadeTemp))
+        if (!validarIdade(idadeTemp))
             printf("\n[ERRO] Idade invalida! Tente novamente.\n");
         else
             break;
     }
 
     char cnhTemp[20]; // buffer já está limpo pelo limparBuffer() do loop acima
-    while(1) {
+    while (1)
+    {
         printf("CNH (Ex: B, BA, BC, ...): ");
         fgets(cnhTemp, 20, stdin);
         limparTexto(cnhTemp);
 
-        if(!validarCnhCarro(cnhTemp))
+        if (!validarCnhCarro(cnhTemp))
             printf("\n[ERRO] CNH nao compativel com carro! Tente novamente.\n");
         else
             break;
     }
 
     char telefoneTemp[20];
-    while(1) {
+    while (1)
+    {
         printf("Telefone (Formato DDD9XXXXXXXX): ");
         fgets(telefoneTemp, 20, stdin);
         limparTexto(telefoneTemp);
 
         // Celular brasileiro tem '9' na posição 2, logo após o DDD
-        if(strlen(telefoneTemp) < 3 || telefoneTemp[2] != '9')
+        if (strlen(telefoneTemp) < 3 || telefoneTemp[2] != '9')
             printf("\n[ERRO] Telefone invalido! O numero deve iniciar com 9 apos o DDD. Tente novamente.\n");
-        else if(!validarTelefoneTamanho(telefoneTemp))
+        else if (!validarTelefoneTamanho(telefoneTemp))
             printf("\n[ERRO] Telefone deve possuir 11 numeros.\n");
-        else if(!validarDDD(telefoneTemp))
+        else if (!validarDDD(telefoneTemp))
             printf("\n[ERRO] DDD invalido!\n");
-        else if(buscarPorTelefone(*vetor, *qtd, telefoneTemp) != -1)
+        else if (buscarPorTelefone(*vetor, *qtd, telefoneTemp) != -1)
             printf("\n[ERRO] Telefone duplicado!\n");
         else
             break;
     }
 
     char emailTemp[100];
-    while(1) {
+    while (1)
+    {
         printf("Email: ");
         fgets(emailTemp, 100, stdin);
         limparTexto(emailTemp);
 
-        if(!validarEmail(emailTemp))
+        if (!validarEmail(emailTemp))
             printf("\n[ERRO] Email invalido!\n");
-        else if(buscarPorEmail(*vetor, *qtd, emailTemp) != -1)
+        else if (buscarPorEmail(*vetor, *qtd, emailTemp) != -1)
             printf("\n[ERRO] E-mail duplicado!\n");
         else
             break;
     }
 
     char nomeTemp[100];
-    while(1) {
+    while (1)
+    {
         printf("Nome: ");
         fgets(nomeTemp, 100, stdin);
         limparTexto(nomeTemp);
 
-        if(!validarNome(nomeTemp))
+        if (!validarNome(nomeTemp))
             printf("\n[ERRO] Nome invalido!\n");
         else
             break;
     }
 
     char cepTemp[10];
-    while(1) {
+    while (1)
+    {
         printf("CEP (formato: XXXXXXXX): ");
         fgets(cepTemp, 10, stdin);
         limparTexto(cepTemp);
 
-        if(!validarCEP(cepTemp))
+        if (!validarCEP(cepTemp))
             printf("\n[ERRO] CEP invalido!\n");
         else
             break;
     }
 
     // Só grava depois que todos os campos passaram pela validação
+    Cliente *aux = realloc(*vetor, (*qtd + 1) * sizeof(Cliente));
+
+    if (aux == NULL)
+    {
+        printf("\n[ERRO] Falha de memoria ao cadastrar cliente!\n");
+        return;
+    }
+
+    *vetor = aux;
+
     int pos = *qtd;
 
     strcpy((*vetor)[pos].cpf, cpfTemp);
@@ -348,8 +358,10 @@ void cadastrarCliente(Cliente **vetor, int *qtd)
     strcpy((*vetor)[pos].email, emailTemp);
     strcpy((*vetor)[pos].nome, nomeTemp);
     strcpy((*vetor)[pos].cep, cepTemp);
-    (*vetor)[pos].ativo   = 1;
-    (*vetor)[pos].alugado = 1; // 1 = livre (sem aluguel ativo)
+
+    (*vetor)[pos].ativo = 1;
+    (*vetor)[pos].alugado = 1;
+
     (*qtd)++;
 
     printf("\n[OK] Cliente cadastrado com sucesso!\n");
@@ -445,7 +457,6 @@ void alterarCliente(Cliente *vetor, int qtd)
     int novaIdade;
 
     printf("\nCPF para alterar: ");
-    limparBuffer();
     fgets(cpfBusca, 15, stdin);
     limparTexto(cpfBusca);
 
@@ -459,6 +470,7 @@ void alterarCliente(Cliente *vetor, int qtd)
     int opcaoAlterar = 0;
     printf("\nO que deseja alterar?\n1. Nome\n2. Idade\n3. CNH\n4. Telefone\n5. Email\n6. CEP\nEscolha: ");
     scanf("%d", &opcaoAlterar);
+    
 
     if (opcaoAlterar == 1)
     {
@@ -593,7 +605,6 @@ void excluirCliente(Cliente **vetor, int *qtd)
 {
     char cpfBusca[15];
     printf("\nCPF do cliente para excluir: ");
-    limparBuffer();
     fgets(cpfBusca, 15, stdin);
     limparTexto(cpfBusca);
 
@@ -604,7 +615,7 @@ void excluirCliente(Cliente **vetor, int *qtd)
         return;
     }
 
-// Impede exclusão de cliente com aluguel ativo (alugado == 0)
+    // Impede exclusão de cliente com aluguel ativo (alugado == 0)
     if ((*vetor)[pos].alugado == 0)
     {
         printf("\n[BLOQUEIO] Cliente possui aluguel ativo (alugado == 0). Nao e permitido exclui-lo!\n");
@@ -655,36 +666,41 @@ void submenuClientes(Cliente **vetor, int *qtd)
         printf("6. Voltar ao menu principal\n");
         printf("Escolha uma opcao: ");
         scanf("%d", &opcao);
+        limparBuffer();
 
-        if(opcao == 1)
+        if (opcao == 1)
             cadastrarCliente(vetor, qtd);
-        else if(opcao == 2)
+        else if (opcao == 2)
             listarClientes(*vetor, *qtd);
-        else if(opcao == 3)
+        else if (opcao == 3)
             consultarCliente(*vetor, *qtd);
-        else if(opcao == 4)
+        else if (opcao == 4)
             alterarCliente(*vetor, *qtd);
-        else if(opcao == 5)
+        else if (opcao == 5)
             excluirCliente(vetor, qtd);
-        else if(opcao == 6) {
+        else if (opcao == 6)
+        {
             printf("Voltando...\n");
             return;
-        } else
+        }
+        else
             printf("\n[ERRO] Opcao invalida!\n");
     }
 }
 
 // salvarClientesArquivo: grava o vetor de clientes no arquivo binário clientes.bin
 // Recebe: vetor, qtd | Retorna: void
-void salvarClientesArquivo(Cliente *vetor, int qtd) {
+void salvarClientesArquivo(Cliente *vetor, int qtd)
+{
     FILE *fp = fopen("clientes.bin", "wb"); // "wb" cria ou sobrescreve o arquivo
-    if(fp == NULL) {
+    if (fp == NULL)
+    {
         printf("\n[ERRO] Nao foi possivel abrir clientes.bin para escrita!\n");
         return;
     }
 
     // Grava todos os registros de uma vez (mais eficiente que um loop)
-    if(qtd > 0)
+    if (qtd > 0)
         fwrite(vetor, sizeof(Cliente), qtd, fp);
 
     fclose(fp);
@@ -693,30 +709,32 @@ void salvarClientesArquivo(Cliente *vetor, int qtd) {
 
 // carregarClientesArquivo: lê clientes.bin ao iniciar e restaura o vetor na memória
 // Recebe: vetor (ponteiro duplo), qtd e capacidade (por ponteiro) | Retorna: void
-void carregarClientesArquivo(Cliente **vetor, int *qtd, int *capacidade) {
+void carregarClientesArquivo(Cliente **vetor, int *qtd)
+{
     FILE *fp = fopen("clientes.bin", "rb");
-    if(fp == NULL) {
+    if (fp == NULL)
+    {
         *qtd = 0; // arquivo ainda não existe (primeira execução), inicia zerado
         return;
     }
 
     Cliente temp;
-    while(fread(&temp, sizeof(Cliente), 1, fp) == 1) {
-        // Expande o vetor se necessário antes de inserir o próximo registro
-        if(*qtd >= *capacidade) {
-            *capacidade += 5;
-            Cliente *aux = realloc(*vetor, (*capacidade) * sizeof(Cliente));
-            if(aux == NULL) {
-                printf("\n[ERRO] Falha de memoria ao carregar arquivo de clientes!\n");
-                fclose(fp);
-                return;
-            }
-            *vetor = aux;
+    while (fread(&temp, sizeof(Cliente), 1, fp) == 1)
+    {
+        Cliente *aux = realloc(*vetor, (*qtd + 1) * sizeof(Cliente));
+
+        if (aux == NULL)
+        {
+            printf("\n[ERRO] Falha de memoria ao carregar arquivo de clientes!\n");
+            fclose(fp);
+            return;
         }
+
+        *vetor = aux;
         (*vetor)[*qtd] = temp;
         (*qtd)++;
     }
 
     fclose(fp);
-    printf("[OK] %d cliente(s) carregado(s) de clientes.bin com sucesso!\n", *qtd);
+    printf("[OK] %d cliente(s) carregado(s) com sucesso de clientes.bin !\n", *qtd);
 }
