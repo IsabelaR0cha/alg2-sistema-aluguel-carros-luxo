@@ -135,9 +135,17 @@ void exibirDadosCarro(Carro *carro)
 
 Carro *buscarCarroPorPlaca(Carro *carros, int cadastrados, char *placa)
 {
-    // Recebe a lista de carros cadastrados, a quantidade de carros cadastrados e uma placa;
-    // Se a placa informada for igual a placa de algum carro cadastrado, retorna um ponteiro para o carro correspondente;
-    // Se não encontrar nenhuma placa compativel retorna NULL.
+/*
+  @brief [buscarCarroPorPlaca] Realiza a busca linear de um veículo no vetor dinâmico a partir da sua placa.
+ 
+  Percorre a memória do vetor de carros utilizando aritmética de ponteiros e compara 
+  a placa informada com a placa de cada registro cadastrado através de strcmp.
+ 
+  @param carros Ponteiro simples para o início do vetor de estruturas Carro na memória.
+  @param cadastrados Quantidade total de carros cadastrados atualmente no sistema.
+  @param placa Ponteiro para a string contendo a placa a ser buscada.
+  @return Carro* Retorna o ponteiro para o elemento Carro encontrado, ou NULL se não existir.
+*/
     for (Carro *p = carros; p < (carros + cadastrados); p++)
     {
         if (strcmp(p->placa, placa) == 0)
@@ -151,10 +159,19 @@ Carro *buscarCarroPorPlaca(Carro *carros, int cadastrados, char *placa)
 // 3. Cadastrar Carro com Alocação Dinâmica
 int cadastrarCarro(Carro **carros, int *cadastrados)
 {
-    // Recebe um ponteiro para um vetor de carros e outro ponteiro para o total de cadastros;
-    //
-    // Valida a placa, marca, modelo, cor, quilometragem e aluguel, forçando redigitação em caso de erro.
-    // Retorna 1 para sucesso ou 0 se a placa já existir no sistema.
+/*
+  @brief [cadastrarCarro] Cadastra um novo veículo expandindo dinamicamente a memória do vetor.
+ 
+  Utiliza realloc() para incrementar o tamanho do vetor na memória para (cadastrados + 1).
+  Lê e valida sequencialmente: placa (verificando duplicidade no sistema), marca, modelo, 
+  cor, quilometragem e valor do aluguel usando laços do-while para forçar a redigitação 
+  em caso de erro. Define a flag alugado = 1 (disponível/sem aluguel ativo) e incrementa 
+  o ponteiro do contador de cadastrados (*cadastrados)++.
+ 
+  @param carros Ponteiro duplo para o vetor dinâmico de Carro (permite atualizar a referência em caso de realloc).
+  @param cadastrados Ponteiro para o número total de veículos cadastrados.
+  @return int Retorna 1 após o cadastro ser concluído com sucesso ou 0 se a placa já estiver cadastrada.
+*/
     Carro *temp = (Carro *)realloc(*carros, (*cadastrados + 1) * sizeof(Carro));
     if (temp == NULL)
     {
@@ -249,9 +266,16 @@ int cadastrarCarro(Carro **carros, int *cadastrados)
 // 4. Consultar Carro pela Placa
 void consultarCarro(Carro *carros, int cadastrados)
 {
-    // recebe uma lista de carros, a quantidade de cadastros e uma placa;
-    // usa as funções validarPlaca e buscarCarroPorPlaca para verificar a validade da placa e se já foi cadastrada;
-    // Se a Placa já tiver sido cadastrada usa a função exibirDadosCarro e exibe as caracteristicas do carro.
+/*
+  @brief [consultarCarro] Consulta e exibe as informações de um carro específico informando a placa.
+ 
+  Verifica se existem veículos cadastrados na memória. Solicita e valida a placa via teclado, 
+  realiza a busca com buscarCarroPorPlaca() e, se localizado, exibe os dados utilizando a 
+  função exibirDadosCarro().
+ 
+  @param carros Ponteiro simples para o vetor de estruturas Carro.
+  @param cadastrados Quantidade total de veículos cadastrados na memória RAM.
+*/
     char placa[8];
     Carro *encontrado = NULL;
 
@@ -283,7 +307,15 @@ void consultarCarro(Carro *carros, int cadastrados)
 // 5. Listar Carros Cadastrados
 void listarCarros(Carro *carros, int cadastrados)
 {
-    // recebe um vetor de carros e a quantidade de carros cadastrados.
+/*
+  @brief [listarCarros] Lista na tela todos os carros gravados no vetor dinâmico.
+ 
+  Verifica se a quantidade de cadastrados é zero. Caso existam registros, percorre o vetor 
+  dinâmico através de ponteiros e exibe as informações de cada veículo enumeradamente.
+ 
+  @param carros Ponteiro simples para o vetor contendo os dados dos carros.
+  @param cadastrados Quantidade total de veículos cadastrados.
+*/
     int i = 1;
     if (cadastrados == 0)
     {
@@ -300,6 +332,16 @@ void listarCarros(Carro *carros, int cadastrados)
 // 6. Alterar Carro por Campo
 void alterarCarro(Carro *carros, int cadastrados)
 {
+/*
+  @brief [alterarCarro] Permite a alteração individual dos campos de um veículo existente.
+ 
+  Valida a placa informada pelo usuário e localiza o veículo. Apresenta um menu de opções 
+  contendo todos os atributos editáveis (Marca, Modelo, Cor, Quilometragem, Valor do Aluguel). 
+  Ao escolher o campo, força a re-validação dos novos dados digitados antes de salvá-los no registro.
+ 
+  @param carros Ponteiro simples para o vetor dinâmico de Carro.
+  @param cadastrados Quantidade de veículos atualmente cadastrados.
+*/
     char placa[8];
     Carro *encontrado = NULL;
 
@@ -429,6 +471,18 @@ void alterarCarro(Carro *carros, int cadastrados)
 // 7. Excluir Carro com Compactação do Vetor
 void excluirCarroPlaca(Carro **carros, int *cadastrados)
 {
+/*
+  @brief [excluirCarroPlaca] Remove um veículo do vetor dinâmico com compactação e redução da memória RAM.
+ 
+  Localiza o veículo pela placa informada. Verifica a flag alugado: se for igual a 0 
+  (veículo alugado), bloqueia a exclusão e exibe uma mensagem de erro. Se alugado == 1, 
+  desloca todos os registros posteriores uma posição para a esquerda (compactação) e decrementa 
+  o contador de cadastrados. Em seguida, redimensiona o vetor dinâmico usando realloc(). 
+  Se for o último veículo excluído, faz o free() e atribui NULL ao ponteiro do vetor.
+ 
+  @param carros Ponteiro duplo para o vetor de estruturas Carro.
+  @param cadastrados Ponteiro para o número total de veículos cadastrados.
+*/
     if (*cadastrados == 0 || *carros == NULL)
     {
         printf("[ERRO] Nenhum carro cadastrado para excluir!\n\n");
@@ -488,6 +542,16 @@ void excluirCarroPlaca(Carro **carros, int *cadastrados)
 // 8. Salvar Carros no Arquivo Binário
 void salvarCarros(Carro *carros, int cadastrados)
 {
+/*
+  @brief [salvarCarros] Salva a quantidade de cadastros e o vetor de carros no arquivo binário "carros.bin".
+ 
+  Abre o arquivo no modo escrita binária ("wb"). Escreve primeiramente a variável inteira com 
+  a quantidade de registros (*cadastrados) e, em seguida, grava em um único bloco de dados 
+  o conteúdo completo da estrutura na memória usando a função fwrite().
+ 
+  @param carros Ponteiro simples contendo o vetor de dados armazenado na RAM.
+  @param cadastrados Total de registros a serem salvos em disco.
+*/
     FILE *arquivo = fopen("carros.bin", "wb");
     if (arquivo == NULL)
     {
@@ -509,6 +573,16 @@ void salvarCarros(Carro *carros, int cadastrados)
 // 9. Carregar Carros do Arquivo Binário
 Carro *carregarCarros(int *cadastrados)
 {
+/*
+  @brief [carregarCarros] Carrega os veículos gravados no arquivo binário "carros.bin" para a memória RAM.
+ 
+  Abre o arquivo no modo leitura binária ("rb"). Lê o número total de registros gravados 
+  com fread(), aloca a memória necessária dinamicamente com malloc() e efetua a leitura 
+  dos dados diretamente para o vetor de estruturas.
+ 
+  @param cadastrados Ponteiro para a variável que armazenará o total de registros lidos do arquivo.
+  @return Carro* Retorna o ponteiro para o vetor alocado com os dados carregados ou NULL em caso de erro/arquivo inexistente.
+*/
     FILE *arquivo = fopen("carros.bin", "rb");
     if (arquivo == NULL)
     {
